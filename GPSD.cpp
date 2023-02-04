@@ -25,38 +25,33 @@
 #include <cstring>
 #include <cmath>
 
-CGPSD::CGPSD(const std::string& address, const std::string& port) :
-m_gpsdAddress(address),
-m_gpsdPort(port),
-m_gpsdData(),
-m_idTimer(1000U, 60U),
-m_networks(),
-m_aprs(NULL)
-{
+CGPSD::CGPSD(const std::string &address, const std::string &port):
+		m_gpsdAddress(address),
+		m_gpsdPort(port),
+		m_gpsdData(),
+		m_idTimer(1000U, 60U),
+		m_networks(),
+		m_aprs(NULL) {
 	assert(!address.empty());
 	assert(!port.empty());
 }
 
-CGPSD::~CGPSD()
-{
+CGPSD::~CGPSD() {
 }
 
-void CGPSD::addNetwork(CDMRNetwork* network)
-{
+void CGPSD::addNetwork(CDMRNetwork *network) {
 	assert(network != NULL);
 
 	m_networks.push_back(network);
 }
 
-void CGPSD::setAPRS(CAPRSWriter* aprs)
-{
+void CGPSD::setAPRS(CAPRSWriter *aprs) {
 	assert(aprs != NULL);
 
 	m_aprs = aprs;
 }
 
-bool CGPSD::open()
-{
+bool CGPSD::open() {
 	int ret = ::gps_open(m_gpsdAddress.c_str(), m_gpsdPort.c_str(), &m_gpsdData);
 	if (ret != 0) {
 		LogError("Error when opening access to gpsd - %d - %s", errno, ::gps_errstr(errno));
@@ -72,8 +67,7 @@ bool CGPSD::open()
 	return true;
 }
 
-void CGPSD::clock(unsigned int ms)
-{
+void CGPSD::clock(unsigned int ms) {
 	m_idTimer.clock(ms);
 
 	if (m_idTimer.hasExpired()) {
@@ -82,18 +76,16 @@ void CGPSD::clock(unsigned int ms)
 	}
 }
 
-void CGPSD::close()
-{
+void CGPSD::close() {
 	::gps_stream(&m_gpsdData, WATCH_DISABLE, NULL);
 	::gps_close(&m_gpsdData);
 }
 
-void CGPSD::sendReport()
-{
+void CGPSD::sendReport() {
 	if (!::gps_waiting(&m_gpsdData, 0))
 		return;
 
-#if GPSD_API_MAJOR_VERSION >= 7
+#if (GPSD_API_MAJOR_VERSION >= 7)
 	if (::gps_read(&m_gpsdData, NULL, 0) <= 0)
 		return;
 #else
@@ -101,7 +93,7 @@ void CGPSD::sendReport()
 		return;
 #endif
 
-	if (m_gpsdData.status != STATUS_FIX)
+	if (m_gpsdFix.status != STATUS_FIX)
 		return;
 
 	bool latlonSet = (m_gpsdData.set & LATLON_SET) == LATLON_SET;
@@ -112,7 +104,7 @@ void CGPSD::sendReport()
 
 	float latitude  = float(m_gpsdData.fix.latitude);
 	float longitude = float(m_gpsdData.fix.longitude);
-#if GPSD_API_MAJOR_VERSION >= 9
+#if (GPSD_API_MAJOR_VERSION >= 9)
 	float altitude  = float(m_gpsdData.fix.altMSL);
 #else
 	float altitude  = float(m_gpsdData.fix.altitude);

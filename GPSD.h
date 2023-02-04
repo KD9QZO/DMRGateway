@@ -16,8 +16,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef	GPSD_H
-#define	GPSD_H
+#ifndef GPSD_H_
+#define GPSD_H_
 
 #if defined(USE_GPSD)
 
@@ -30,14 +30,16 @@
 
 #include <gps.h>
 
+
+
 class CGPSD {
 public:
-	CGPSD(const std::string& address, const std::string& port);
+	CGPSD(const std::string &address, const std::string &port);
 	~CGPSD();
 
-	void addNetwork(CDMRNetwork* network);
+	void addNetwork(CDMRNetwork *network);
 
-	void setAPRS(CAPRSWriter* aprs);
+	void setAPRS(CAPRSWriter *aprs);
 
 	bool open();
 
@@ -46,12 +48,13 @@ public:
 	void close();
 
 private:
-	std::string               m_gpsdAddress;
-	std::string               m_gpsdPort;
-	struct gps_data_t         m_gpsdData;
-	CTimer                    m_idTimer;
+	std::string m_gpsdAddress;
+	std::string m_gpsdPort;
+	struct gps_data_t m_gpsdData;
+	struct gps_fix_t m_gpsdFix;
+	CTimer m_idTimer;
 	std::vector<CDMRNetwork*> m_networks;
-	CAPRSWriter*              m_aprs;
+	CAPRSWriter* m_aprs;
 
 	void sendReport();
 };
