@@ -18,12 +18,15 @@
 
 #include "GPSD.h"
 
+
 #if defined(USE_GPSD)
 
 #include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <cmath>
+
+
 
 CGPSD::CGPSD(const std::string &address, const std::string &port):
 		m_gpsdAddress(address),
@@ -53,12 +56,13 @@ void CGPSD::setAPRS(CAPRSWriter *aprs) {
 
 bool CGPSD::open() {
 	int ret = ::gps_open(m_gpsdAddress.c_str(), m_gpsdPort.c_str(), &m_gpsdData);
+
 	if (ret != 0) {
 		LogError("Error when opening access to gpsd - %d - %s", errno, ::gps_errstr(errno));
 		return false;
 	}
 
-	::gps_stream(&m_gpsdData, WATCH_ENABLE | WATCH_JSON, NULL);
+	::gps_stream(&m_gpsdData, (WATCH_ENABLE | WATCH_JSON), NULL);
 
 	LogMessage("Connected to GPSD");
 
@@ -82,23 +86,29 @@ void CGPSD::close() {
 }
 
 void CGPSD::sendReport() {
-	if (!::gps_waiting(&m_gpsdData, 0))
+	if (!::gps_waiting(&m_gpsdData, 0)) {
 		return;
+	}
 
 #if (GPSD_API_MAJOR_VERSION >= 7)
-	if (::gps_read(&m_gpsdData, NULL, 0) <= 0)
+	if (::gps_read(&m_gpsdData, NULL, 0) <= 0) {
 		return;
+	}
 #else
-	if (::gps_read(&m_gpsdData) <= 0)
+	if (::gps_read(&m_gpsdData) <= 0) {
 		return;
+	}
 #endif
 
-	if (m_gpsdFix.status != STATUS_FIX)
+	/*! \note This needed to be changed from \c m_gpsdData.status to \c m_gpsdFix.status to work with newer gpsd */
+	if (m_gpsdFix.status != STATUS_FIX) {
 		return;
+	}
 
 	bool latlonSet = (m_gpsdData.set & LATLON_SET) == LATLON_SET;
-	if (!latlonSet)
+	if (!latlonSet) {
 		return;
+	}
 
 	bool altitudeSet = (m_gpsdData.set & ALTITUDE_SET) == ALTITUDE_SET;
 
@@ -110,11 +120,14 @@ void CGPSD::sendReport() {
 	float altitude  = float(m_gpsdData.fix.altitude);
 #endif
 
-	if (m_aprs != NULL)
+	if (m_aprs != NULL) {
 		m_aprs->setLocation(latitude, longitude, altitudeSet ? altitude : 0.0F);
+	}
 
-	for (std::vector<CDMRNetwork*>::const_iterator it = m_networks.begin(); it != m_networks.end(); ++it)
+	for (std::vector<CDMRNetwork*>::const_iterator it = m_networks.begin(); it != m_networks.end(); ++it) {
 		(*it)->writeHomePosition(latitude, longitude);
+	}
 }
 
-#endif
+
+#endif	/* defined(USE_GPSD) */

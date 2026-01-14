@@ -37,7 +37,7 @@
 #include <cstdio>
 #include <vector>
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if (!defined(_WIN32) && !defined(_WIN64))
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
@@ -45,14 +45,14 @@
 #include <pwd.h>
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
-const char* DEFAULT_INI_FILE = "DMRGateway.ini";
+#if (defined(_WIN32) || defined(_WIN64))
+const char *DEFAULT_INI_FILE = "DMRGateway.ini";
 #else
-const char* DEFAULT_INI_FILE = "/etc/DMRGateway.ini";
+const char *DEFAULT_INI_FILE = "/etc/DMRGateway.ini";
 #endif
 
 const unsigned int XLX_SLOT = 2U;
-const unsigned int XLX_TG   = 9U;
+const unsigned int XLX_TG = 9U;
 
 const unsigned char COLOR_CODE = 3U;
 
@@ -60,21 +60,19 @@ static bool m_killed = false;
 static int  m_signal = 0;
 
 #if !defined(_WIN32) && !defined(_WIN64)
-static void sigHandler(int signum)
-{
+static void sigHandler(int signum) {
 	m_killed = true;
 	m_signal = signum;
 }
 #endif
 
-const char* HEADER1 = "This software is for use on amateur radio networks only,";
-const char* HEADER2 = "it is to be used for educational purposes only. Its use on";
-const char* HEADER3 = "commercial networks is strictly prohibited.";
-const char* HEADER4 = "Copyright(C) 2017-2022 by Jonathan Naylor, G4KLX and others";
+const char *HEADER1 = "This software is for use on amateur radio networks only,";
+const char *HEADER2 = "it is to be used for educational purposes only. Its use on";
+const char *HEADER3 = "commercial networks is strictly prohibited.";
+const char *HEADER4 = "Copyright(C) 2017-2022 by Jonathan Naylor, G4KLX and others";
 
-int main(int argc, char** argv)
-{
-	const char* iniFile = DEFAULT_INI_FILE;
+int main(int argc, char *argv[]) {
+	const char *iniFile = DEFAULT_INI_FILE;
 
 	if (argc > 1) {
 		for (int currentArg = 1; currentArg < argc; ++currentArg) {
@@ -102,7 +100,7 @@ int main(int argc, char** argv)
 	do {
 		m_signal = 0;
 
-		CDMRGateway* host = new CDMRGateway(std::string(iniFile));
+		CDMRGateway *host = new CDMRGateway(std::string(iniFile));
 		ret = host->run();
 
 		delete host;
@@ -122,7 +120,7 @@ int main(int argc, char** argv)
 	return ret;
 }
 
-CDMRGateway::CDMRGateway(const std::string& confFile) :
+CDMRGateway::CDMRGateway(const std::string &confFile) :
 m_conf(confFile),
 m_status(NULL),
 m_repeater(NULL),
@@ -195,8 +193,7 @@ m_network3Enabled(false),
 m_network4Enabled(false),
 m_network5Enabled(false),
 m_networkXlxEnabled(false),
-m_remoteControl(NULL)
-{
+m_remoteControl(NULL) {
 	CUDPSocket::startup();
 
 	m_status = new DMRGW_STATUS[3U];
@@ -206,8 +203,7 @@ m_remoteControl(NULL)
 	m_config = new unsigned char[400U];
 }
 
-CDMRGateway::~CDMRGateway()
-{
+CDMRGateway::~CDMRGateway() {
 	for (std::vector<CRewrite*>::iterator it = m_dmr1NetRewrites.begin(); it != m_dmr1NetRewrites.end(); ++it)
 		delete *it;
 
@@ -219,7 +215,7 @@ CDMRGateway::~CDMRGateway()
 
 	for (std::vector<CRewrite*>::iterator it = m_dmr2NetRewrites.begin(); it != m_dmr2NetRewrites.end(); ++it)
 		delete *it;
-	
+
 	for (std::vector<CRewrite*>::iterator it = m_dmr2RFRewrites.begin(); it != m_dmr2RFRewrites.end(); ++it)
 		delete *it;
 
@@ -269,7 +265,7 @@ CDMRGateway::~CDMRGateway()
 		delete *it;
 
 	for (std::vector<CDynVoice*>::iterator it = m_dynVoices.begin(); it != m_dynVoices.end(); ++it)
-		delete* it;
+		delete *it;
 
 	delete m_rptRewrite;
 	delete m_xlxRewrite;
@@ -280,8 +276,7 @@ CDMRGateway::~CDMRGateway()
 	CUDPSocket::shutdown();
 }
 
-int CDMRGateway::run()
-{
+int CDMRGateway::run() {
 	bool ret = m_conf.read();
 	if (!ret) {
 		::fprintf(stderr, "DMRGateway: cannot read the .ini file\n");
@@ -314,12 +309,12 @@ int CDMRGateway::run()
 
 		// If we are currently root...
 		if (getuid() == 0) {
-			struct passwd* user = ::getpwnam("mmdvm");
+			struct passwd *user = ::getpwnam("mmdvm");
 			if (user == NULL) {
 				::fprintf(stderr, "Could not get the mmdvm user, exiting\n");
 				return -1;
 			}
-			
+
 			uid_t mmdvm_uid = user->pw_uid;
 			gid_t mmdvm_gid = user->pw_gid;
 
@@ -333,8 +328,8 @@ int CDMRGateway::run()
 				::fprintf(stderr, "Could not set mmdvm UID, exiting\n");
 				return -1;
 			}
-		    
-			// Double check it worked (AKA Paranoia) 
+
+			// Double check it worked (AKA Paranoia)
 			if (setuid(0) != -1) {
 				::fprintf(stderr, "It's possible to regain root - something is wrong!, exiting\n");
 				return -1;
@@ -404,7 +399,7 @@ int CDMRGateway::run()
 	bool gpsdEnabled = m_conf.getGPSDEnabled();
 	if (gpsdEnabled) {
 		std::string gpsdAddress = m_conf.getGPSDAddress();
-		std::string gpsdPort    = m_conf.getGPSDPort();
+		std::string gpsdPort = m_conf.getGPSDPort();
 
 		LogInfo("GPSD Parameters");
 		LogInfo("    Address: %s", gpsdAddress.c_str());
@@ -505,10 +500,10 @@ int CDMRGateway::run()
 
 	createAPRS();
 
-	unsigned int rfTimeout  = m_conf.getRFTimeout();
+	unsigned int rfTimeout = m_conf.getRFTimeout();
 	unsigned int netTimeout = m_conf.getNetTimeout();
 
-	CTimer* timer[3U];
+	CTimer *timer[3U];
 	timer[1U] = new CTimer(1000U);
 	timer[2U] = new CTimer(1000U);
 
@@ -688,9 +683,9 @@ int CDMRGateway::run()
 					linkXLX(dstIdBuf);
 			} else {
 				unsigned int slotNo = data.getSlotNo();
-				unsigned int srcId  = data.getSrcId();
-				unsigned int dstId  = data.getDstId();
-				FLCO flco           = data.getFLCO();
+				unsigned int srcId = data.getSrcId();
+				unsigned int dstId = data.getDstId();
+				FLCO flco = data.getFLCO();
 
 				bool trace = false;
 				if (ruleTrace && (srcId != rfSrcId[slotNo] || dstId != rfDstId[slotNo])) {
@@ -944,8 +939,8 @@ int CDMRGateway::run()
 						timer[m_xlxSlot]->start();
 					} else {
 						unsigned int slotNo = data.getSlotNo();
-						unsigned int dstId  = data.getDstId();
-						FLCO flco           = data.getFLCO();
+						unsigned int dstId = data.getDstId();
+						FLCO flco = data.getFLCO();
 						LogWarning("XLX%s, Unexpected data from slot %u %s%u", m_xlxNumber.c_str(), slotNo, flco == FLCO_GROUP ? "TG" : "", dstId);
 					}
 				}
@@ -956,9 +951,9 @@ int CDMRGateway::run()
 			ret = m_dmrNetwork1->read(data);
 			if (ret) {
 				unsigned int slotNo = data.getSlotNo();
-				unsigned int srcId  = data.getSrcId();
-				unsigned int dstId  = data.getDstId();
-				FLCO flco           = data.getFLCO();
+				unsigned int srcId = data.getSrcId();
+				unsigned int dstId = data.getDstId();
+				FLCO flco = data.getFLCO();
 
 				bool trace = false;
 				if (ruleTrace && (srcId != dmr1SrcId[slotNo] || dstId != dmr1DstId[slotNo])) {
@@ -1006,9 +1001,9 @@ int CDMRGateway::run()
 			ret = m_dmrNetwork2->read(data);
 			if (ret) {
 				unsigned int slotNo = data.getSlotNo();
-				unsigned int srcId  = data.getSrcId();
-				unsigned int dstId  = data.getDstId();
-				FLCO flco           = data.getFLCO();
+				unsigned int srcId = data.getSrcId();
+				unsigned int dstId = data.getDstId();
+				FLCO flco = data.getFLCO();
 
 				bool trace = false;
 				if (ruleTrace && (srcId != dmr2SrcId[slotNo] || dstId != dmr2DstId[slotNo])) {
@@ -1346,13 +1341,12 @@ int CDMRGateway::run()
 	return 0;
 }
 
-bool CDMRGateway::createMMDVM()
-{
-	std::string rptAddress   = m_conf.getRptAddress();
-	unsigned short rptPort   = m_conf.getRptPort();
+bool CDMRGateway::createMMDVM() {
+	std::string rptAddress = m_conf.getRptAddress();
+	unsigned short rptPort = m_conf.getRptPort();
 	std::string localAddress = m_conf.getLocalAddress();
 	unsigned short localPort = m_conf.getLocalPort();
-	bool debug               = m_conf.getDebug();
+	bool debug = m_conf.getDebug();
 
 	LogInfo("MMDVM Network Parameters");
 	LogInfo("    Rpt Address: %s", rptAddress.c_str());
@@ -1372,16 +1366,15 @@ bool CDMRGateway::createMMDVM()
 	return true;
 }
 
-bool CDMRGateway::createDMRNetwork1()
-{
-	std::string address  = m_conf.getDMRNetwork1Address();
-	unsigned short port  = m_conf.getDMRNetwork1Port();
+bool CDMRGateway::createDMRNetwork1() {
+	std::string address = m_conf.getDMRNetwork1Address();
+	unsigned short port = m_conf.getDMRNetwork1Port();
 	unsigned short local = m_conf.getDMRNetwork1Local();
-	unsigned int id      = m_conf.getDMRNetwork1Id();
+	unsigned int id = m_conf.getDMRNetwork1Id();
 	std::string password = m_conf.getDMRNetwork1Password();
-	bool location        = m_conf.getDMRNetwork1Location();
-	bool debug           = m_conf.getDMRNetwork1Debug();
-	m_dmr1Name           = m_conf.getDMRNetwork1Name();
+	bool location = m_conf.getDMRNetwork1Location();
+	bool debug = m_conf.getDMRNetwork1Debug();
+	m_dmr1Name = m_conf.getDMRNetwork1Name();
 
 	if (id == 0U)
 		id = m_repeater->getId();
@@ -1433,8 +1426,8 @@ bool CDMRGateway::createDMRNetwork1()
 		else
 			LogInfo("    Rewrite Net: %u:TG%u-TG%u -> %u:TG%u-TG%u", (*it).m_toSlot, (*it).m_toTG, (*it).m_toTG + (*it).m_range - 1U, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U);
 
-		CRewriteTG* rfRewrite  = new CRewriteTG(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
-		CRewriteTG* netRewrite = new CRewriteTG(m_dmr1Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
+		CRewriteTG *rfRewrite = new CRewriteTG(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteTG *netRewrite = new CRewriteTG(m_dmr1Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
 
 		m_dmr1RFRewrites.push_back(rfRewrite);
 		m_dmr1NetRewrites.push_back(netRewrite);
@@ -1447,7 +1440,7 @@ bool CDMRGateway::createDMRNetwork1()
 		else
 			LogInfo("    Rewrite RF: %u:%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewritePC* rewrite = new CRewritePC(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewritePC *rewrite = new CRewritePC(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr1RFRewrites.push_back(rewrite);
 	}
@@ -1459,7 +1452,7 @@ bool CDMRGateway::createDMRNetwork1()
 		else
 			LogInfo("    Rewrite RF: %u:TG%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewriteType* rewrite = new CRewriteType(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewriteType *rewrite = new CRewriteType(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr1RFRewrites.push_back(rewrite);
 	}
@@ -1471,7 +1464,7 @@ bool CDMRGateway::createDMRNetwork1()
 		else
 			LogInfo("    Rewrite Net: %u:%u-%u -> %u:TG%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toTG);
 
-		CRewriteSrc* rewrite = new CRewriteSrc(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteSrc *rewrite = new CRewriteSrc(m_dmr1Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
 
 		m_dmr1NetRewrites.push_back(rewrite);
 	}
@@ -1480,9 +1473,9 @@ bool CDMRGateway::createDMRNetwork1()
 	for (std::vector<CTGDynRewriteStruct>::const_iterator it = dynRewrites.begin(); it != dynRewrites.end(); ++it) {
 		LogInfo("    Dyn Rewrite: %u:TG%u-%u:TG%u <-> %u:TG%u (disc %u:%u) (status %u:%u) (%u exclusions)", (*it).m_slot, (*it).m_fromTG, (*it).m_slot, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_slot, (*it).m_toTG, (*it).m_slot, (*it).m_discPC, (*it).m_slot, (*it).m_statusPC, (*it).m_exclTGs.size());
 
-		CDynVoice* voice = NULL;
+		CDynVoice *voice = NULL;
 		if (m_conf.getVoiceEnabled()) {
-			std::string language  = m_conf.getVoiceLanguage();
+			std::string language = m_conf.getVoiceLanguage();
 			std::string directory = m_conf.getVoiceDirectory();
 
 			voice = new CDynVoice(directory, language, m_repeater->getId(), (*it).m_slot, (*it).m_toTG);
@@ -1495,8 +1488,8 @@ bool CDMRGateway::createDMRNetwork1()
 			}
 		}
 
-		CRewriteDynTGNet* netRewriteDynTG = new CRewriteDynTGNet(m_dmr1Name, (*it).m_slot, (*it).m_toTG);
-		CRewriteDynTGRF* rfRewriteDynTG = new CRewriteDynTGRF(m_dmr1Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
+		CRewriteDynTGNet *netRewriteDynTG = new CRewriteDynTGNet(m_dmr1Name, (*it).m_slot, (*it).m_toTG);
+		CRewriteDynTGRF *rfRewriteDynTG = new CRewriteDynTGRF(m_dmr1Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
 
 		m_dmr1RFRewrites.push_back(rfRewriteDynTG);
 		m_dmr1NetRewrites.push_back(netRewriteDynTG);
@@ -1507,8 +1500,8 @@ bool CDMRGateway::createDMRNetwork1()
 	for (std::vector<CIdRewriteStruct>::const_iterator it = idRewrites.begin(); it != idRewrites.end(); ++it) {
 		LogInfo("    Rewrite Id: %u <-> %u", (*it).m_rfId, (*it).m_netId);
 
-		CRewriteSrcId* rewriteSrcId = new CRewriteSrcId(m_dmr1Name, (*it).m_rfId, (*it).m_netId);
-		CRewriteDstId* rewriteDstId = new CRewriteDstId(m_dmr1Name, (*it).m_netId, (*it).m_rfId);
+		CRewriteSrcId *rewriteSrcId = new CRewriteSrcId(m_dmr1Name, (*it).m_rfId, (*it).m_netId);
+		CRewriteDstId *rewriteDstId = new CRewriteDstId(m_dmr1Name, (*it).m_netId, (*it).m_rfId);
 
 		m_dmr1SrcRewrites.push_back(rewriteSrcId);
 		m_dmr1NetRewrites.push_back(rewriteDstId);
@@ -1518,8 +1511,8 @@ bool CDMRGateway::createDMRNetwork1()
 	for (std::vector<unsigned int>::const_iterator it = tgPassAll.begin(); it != tgPassAll.end(); ++it) {
 		LogInfo("    Pass All TG: %u", *it);
 
-		CPassAllTG* rfPassAllTG  = new CPassAllTG(m_dmr1Name, *it);
-		CPassAllTG* netPassAllTG = new CPassAllTG(m_dmr1Name, *it);
+		CPassAllTG *rfPassAllTG = new CPassAllTG(m_dmr1Name, *it);
+		CPassAllTG *netPassAllTG = new CPassAllTG(m_dmr1Name, *it);
 
 		m_dmr1Passalls.push_back(rfPassAllTG);
 		m_dmr1NetRewrites.push_back(netPassAllTG);
@@ -1529,8 +1522,8 @@ bool CDMRGateway::createDMRNetwork1()
 	for (std::vector<unsigned int>::const_iterator it = pcPassAll.begin(); it != pcPassAll.end(); ++it) {
 		LogInfo("    Pass All PC: %u", *it);
 
-		CPassAllPC* rfPassAllPC  = new CPassAllPC(m_dmr1Name, *it);
-		CPassAllPC* netPassAllPC = new CPassAllPC(m_dmr1Name, *it);
+		CPassAllPC *rfPassAllPC = new CPassAllPC(m_dmr1Name, *it);
+		CPassAllPC *netPassAllPC = new CPassAllPC(m_dmr1Name, *it);
 
 		m_dmr1Passalls.push_back(rfPassAllPC);
 		m_dmr1NetRewrites.push_back(netPassAllPC);
@@ -1541,16 +1534,15 @@ bool CDMRGateway::createDMRNetwork1()
 	return true;
 }
 
-bool CDMRGateway::createDMRNetwork2()
-{
-	std::string address  = m_conf.getDMRNetwork2Address();
-	unsigned short port  = m_conf.getDMRNetwork2Port();
+bool CDMRGateway::createDMRNetwork2() {
+	std::string address = m_conf.getDMRNetwork2Address();
+	unsigned short port = m_conf.getDMRNetwork2Port();
 	unsigned short local = m_conf.getDMRNetwork2Local();
-	unsigned int id      = m_conf.getDMRNetwork2Id();
+	unsigned int id = m_conf.getDMRNetwork2Id();
 	std::string password = m_conf.getDMRNetwork2Password();
-	bool location        = m_conf.getDMRNetwork2Location();
-	bool debug           = m_conf.getDMRNetwork2Debug();
-	m_dmr2Name           = m_conf.getDMRNetwork2Name();
+	bool location = m_conf.getDMRNetwork2Location();
+	bool debug = m_conf.getDMRNetwork2Debug();
+	m_dmr2Name = m_conf.getDMRNetwork2Name();
 
 	if (id == 0U)
 		id = m_repeater->getId();
@@ -1602,8 +1594,8 @@ bool CDMRGateway::createDMRNetwork2()
 		else
 			LogInfo("    Rewrite Net: %u:TG%u-TG%u -> %u:TG%u-TG%u", (*it).m_toSlot, (*it).m_toTG, (*it).m_toTG + (*it).m_range - 1U, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U);
 
-		CRewriteTG* rfRewrite  = new CRewriteTG(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
-		CRewriteTG* netRewrite = new CRewriteTG(m_dmr2Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
+		CRewriteTG *rfRewrite = new CRewriteTG(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteTG *netRewrite = new CRewriteTG(m_dmr2Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
 
 		m_dmr2RFRewrites.push_back(rfRewrite);
 		m_dmr2NetRewrites.push_back(netRewrite);
@@ -1616,7 +1608,7 @@ bool CDMRGateway::createDMRNetwork2()
 		else
 			LogInfo("    Rewrite RF: %u:%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewritePC* rewrite = new CRewritePC(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewritePC *rewrite = new CRewritePC(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr2RFRewrites.push_back(rewrite);
 	}
@@ -1628,7 +1620,7 @@ bool CDMRGateway::createDMRNetwork2()
 		else
 			LogInfo("    Rewrite RF: %u:TG%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewriteType* rewrite = new CRewriteType(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewriteType *rewrite = new CRewriteType(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr2RFRewrites.push_back(rewrite);
 	}
@@ -1640,7 +1632,7 @@ bool CDMRGateway::createDMRNetwork2()
 		else
 			LogInfo("    Rewrite Net: %u:%u-%u -> %u:TG%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toTG);
 
-		CRewriteSrc* rewrite = new CRewriteSrc(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteSrc *rewrite = new CRewriteSrc(m_dmr2Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
 
 		m_dmr2NetRewrites.push_back(rewrite);
 	}
@@ -1649,7 +1641,7 @@ bool CDMRGateway::createDMRNetwork2()
 	for (std::vector<CTGDynRewriteStruct>::const_iterator it = dynRewrites.begin(); it != dynRewrites.end(); ++it) {
 		LogInfo("    Dyn Rewrite: %u:TG%u-%u:TG%u <-> %u:TG%u (disc %u:%u) (status %u:%u) (%u exclusions)", (*it).m_slot, (*it).m_fromTG, (*it).m_slot, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_slot, (*it).m_toTG, (*it).m_slot, (*it).m_discPC, (*it).m_slot, (*it).m_statusPC, (*it).m_exclTGs.size());
 
-		CDynVoice* voice = NULL;
+		CDynVoice *voice = NULL;
 		if (m_conf.getVoiceEnabled()) {
 			std::string language = m_conf.getVoiceLanguage();
 			std::string directory = m_conf.getVoiceDirectory();
@@ -1664,8 +1656,8 @@ bool CDMRGateway::createDMRNetwork2()
 			}
 		}
 
-		CRewriteDynTGNet* netRewriteDynTG = new CRewriteDynTGNet(m_dmr2Name, (*it).m_slot, (*it).m_toTG);
-		CRewriteDynTGRF* rfRewriteDynTG = new CRewriteDynTGRF(m_dmr2Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
+		CRewriteDynTGNet *netRewriteDynTG = new CRewriteDynTGNet(m_dmr2Name, (*it).m_slot, (*it).m_toTG);
+		CRewriteDynTGRF *rfRewriteDynTG = new CRewriteDynTGRF(m_dmr2Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
 
 		m_dmr2RFRewrites.push_back(rfRewriteDynTG);
 		m_dmr2NetRewrites.push_back(netRewriteDynTG);
@@ -1676,8 +1668,8 @@ bool CDMRGateway::createDMRNetwork2()
 	for (std::vector<CIdRewriteStruct>::const_iterator it = idRewrites.begin(); it != idRewrites.end(); ++it) {
 		LogInfo("    Rewrite Id: %u <-> %u", (*it).m_rfId, (*it).m_netId);
 
-		CRewriteSrcId* rewriteSrcId = new CRewriteSrcId(m_dmr2Name, (*it).m_rfId, (*it).m_netId);
-		CRewriteDstId* rewriteDstId = new CRewriteDstId(m_dmr2Name, (*it).m_netId, (*it).m_rfId);
+		CRewriteSrcId *rewriteSrcId = new CRewriteSrcId(m_dmr2Name, (*it).m_rfId, (*it).m_netId);
+		CRewriteDstId *rewriteDstId = new CRewriteDstId(m_dmr2Name, (*it).m_netId, (*it).m_rfId);
 
 		m_dmr2SrcRewrites.push_back(rewriteSrcId);
 		m_dmr2NetRewrites.push_back(rewriteDstId);
@@ -1687,8 +1679,8 @@ bool CDMRGateway::createDMRNetwork2()
 	for (std::vector<unsigned int>::const_iterator it = tgPassAll.begin(); it != tgPassAll.end(); ++it) {
 		LogInfo("    Pass All TG: %u", *it);
 
-		CPassAllTG* rfPassAllTG  = new CPassAllTG(m_dmr2Name, *it);
-		CPassAllTG* netPassAllTG = new CPassAllTG(m_dmr2Name, *it);
+		CPassAllTG *rfPassAllTG = new CPassAllTG(m_dmr2Name, *it);
+		CPassAllTG *netPassAllTG = new CPassAllTG(m_dmr2Name, *it);
 
 		m_dmr2Passalls.push_back(rfPassAllTG);
 		m_dmr2NetRewrites.push_back(netPassAllTG);
@@ -1698,8 +1690,8 @@ bool CDMRGateway::createDMRNetwork2()
 	for (std::vector<unsigned int>::const_iterator it = pcPassAll.begin(); it != pcPassAll.end(); ++it) {
 		LogInfo("    Pass All PC: %u", *it);
 
-		CPassAllPC* rfPassAllPC  = new CPassAllPC(m_dmr2Name, *it);
-		CPassAllPC* netPassAllPC = new CPassAllPC(m_dmr2Name, *it);
+		CPassAllPC *rfPassAllPC = new CPassAllPC(m_dmr2Name, *it);
+		CPassAllPC *netPassAllPC = new CPassAllPC(m_dmr2Name, *it);
 
 		m_dmr2Passalls.push_back(rfPassAllPC);
 		m_dmr2NetRewrites.push_back(netPassAllPC);
@@ -1710,16 +1702,15 @@ bool CDMRGateway::createDMRNetwork2()
 	return true;
 }
 
-bool CDMRGateway::createDMRNetwork3()
-{
-	std::string address  = m_conf.getDMRNetwork3Address();
-	unsigned short port  = m_conf.getDMRNetwork3Port();
+bool CDMRGateway::createDMRNetwork3() {
+	std::string address = m_conf.getDMRNetwork3Address();
+	unsigned short port = m_conf.getDMRNetwork3Port();
 	unsigned short local = m_conf.getDMRNetwork3Local();
-	unsigned int id      = m_conf.getDMRNetwork3Id();
+	unsigned int id = m_conf.getDMRNetwork3Id();
 	std::string password = m_conf.getDMRNetwork3Password();
-	bool location        = m_conf.getDMRNetwork3Location();
-	bool debug           = m_conf.getDMRNetwork3Debug();
-	m_dmr3Name           = m_conf.getDMRNetwork3Name();
+	bool location = m_conf.getDMRNetwork3Location();
+	bool debug = m_conf.getDMRNetwork3Debug();
+	m_dmr3Name = m_conf.getDMRNetwork3Name();
 
 	if (id == 0U)
 		id = m_repeater->getId();
@@ -1771,8 +1762,8 @@ bool CDMRGateway::createDMRNetwork3()
 		else
 			LogInfo("    Rewrite Net: %u:TG%u-TG%u -> %u:TG%u-TG%u", (*it).m_toSlot, (*it).m_toTG, (*it).m_toTG + (*it).m_range - 1U, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U);
 
-		CRewriteTG* rfRewrite = new CRewriteTG(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
-		CRewriteTG* netRewrite = new CRewriteTG(m_dmr3Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
+		CRewriteTG *rfRewrite = new CRewriteTG(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteTG *netRewrite = new CRewriteTG(m_dmr3Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
 
 		m_dmr3RFRewrites.push_back(rfRewrite);
 		m_dmr3NetRewrites.push_back(netRewrite);
@@ -1785,7 +1776,7 @@ bool CDMRGateway::createDMRNetwork3()
 		else
 			LogInfo("    Rewrite RF: %u:%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewritePC* rewrite = new CRewritePC(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewritePC *rewrite = new CRewritePC(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr3RFRewrites.push_back(rewrite);
 	}
@@ -1797,7 +1788,7 @@ bool CDMRGateway::createDMRNetwork3()
 		else
 			LogInfo("    Rewrite RF: %u:TG%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewriteType* rewrite = new CRewriteType(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewriteType *rewrite = new CRewriteType(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr3RFRewrites.push_back(rewrite);
 	}
@@ -1809,7 +1800,7 @@ bool CDMRGateway::createDMRNetwork3()
 		else
 			LogInfo("    Rewrite Net: %u:%u-%u -> %u:TG%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toTG);
 
-		CRewriteSrc* rewrite = new CRewriteSrc(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteSrc *rewrite = new CRewriteSrc(m_dmr3Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
 
 		m_dmr3NetRewrites.push_back(rewrite);
 	}
@@ -1818,7 +1809,7 @@ bool CDMRGateway::createDMRNetwork3()
 	for (std::vector<CTGDynRewriteStruct>::const_iterator it = dynRewrites.begin(); it != dynRewrites.end(); ++it) {
 		LogInfo("    Dyn Rewrite: %u:TG%u-%u:TG%u <-> %u:TG%u (disc %u:%u) (status %u:%u) (%u exclusions)", (*it).m_slot, (*it).m_fromTG, (*it).m_slot, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_slot, (*it).m_toTG, (*it).m_slot, (*it).m_discPC, (*it).m_slot, (*it).m_statusPC, (*it).m_exclTGs.size());
 
-		CDynVoice* voice = NULL;
+		CDynVoice *voice = NULL;
 		if (m_conf.getVoiceEnabled()) {
 			std::string language = m_conf.getVoiceLanguage();
 			std::string directory = m_conf.getVoiceDirectory();
@@ -1833,8 +1824,8 @@ bool CDMRGateway::createDMRNetwork3()
 			}
 		}
 
-		CRewriteDynTGNet* netRewriteDynTG = new CRewriteDynTGNet(m_dmr3Name, (*it).m_slot, (*it).m_toTG);
-		CRewriteDynTGRF* rfRewriteDynTG = new CRewriteDynTGRF(m_dmr3Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
+		CRewriteDynTGNet *netRewriteDynTG = new CRewriteDynTGNet(m_dmr3Name, (*it).m_slot, (*it).m_toTG);
+		CRewriteDynTGRF *rfRewriteDynTG = new CRewriteDynTGRF(m_dmr3Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
 
 		m_dmr3RFRewrites.push_back(rfRewriteDynTG);
 		m_dmr3NetRewrites.push_back(netRewriteDynTG);
@@ -1845,8 +1836,8 @@ bool CDMRGateway::createDMRNetwork3()
 	for (std::vector<CIdRewriteStruct>::const_iterator it = idRewrites.begin(); it != idRewrites.end(); ++it) {
 		LogInfo("    Rewrite Id: %u <-> %u", (*it).m_rfId, (*it).m_netId);
 
-		CRewriteSrcId* rewriteSrcId = new CRewriteSrcId(m_dmr3Name, (*it).m_rfId, (*it).m_netId);
-		CRewriteDstId* rewriteDstId = new CRewriteDstId(m_dmr3Name, (*it).m_netId, (*it).m_rfId);
+		CRewriteSrcId *rewriteSrcId = new CRewriteSrcId(m_dmr3Name, (*it).m_rfId, (*it).m_netId);
+		CRewriteDstId *rewriteDstId = new CRewriteDstId(m_dmr3Name, (*it).m_netId, (*it).m_rfId);
 
 		m_dmr3SrcRewrites.push_back(rewriteSrcId);
 		m_dmr3NetRewrites.push_back(rewriteDstId);
@@ -1856,8 +1847,8 @@ bool CDMRGateway::createDMRNetwork3()
 	for (std::vector<unsigned int>::const_iterator it = tgPassAll.begin(); it != tgPassAll.end(); ++it) {
 		LogInfo("    Pass All TG: %u", *it);
 
-		CPassAllTG* rfPassAllTG = new CPassAllTG(m_dmr3Name, *it);
-		CPassAllTG* netPassAllTG = new CPassAllTG(m_dmr3Name, *it);
+		CPassAllTG *rfPassAllTG = new CPassAllTG(m_dmr3Name, *it);
+		CPassAllTG *netPassAllTG = new CPassAllTG(m_dmr3Name, *it);
 
 		m_dmr3Passalls.push_back(rfPassAllTG);
 		m_dmr3NetRewrites.push_back(netPassAllTG);
@@ -1867,8 +1858,8 @@ bool CDMRGateway::createDMRNetwork3()
 	for (std::vector<unsigned int>::const_iterator it = pcPassAll.begin(); it != pcPassAll.end(); ++it) {
 		LogInfo("    Pass All PC: %u", *it);
 
-		CPassAllPC* rfPassAllPC = new CPassAllPC(m_dmr3Name, *it);
-		CPassAllPC* netPassAllPC = new CPassAllPC(m_dmr3Name, *it);
+		CPassAllPC *rfPassAllPC = new CPassAllPC(m_dmr3Name, *it);
+		CPassAllPC *netPassAllPC = new CPassAllPC(m_dmr3Name, *it);
 
 		m_dmr3Passalls.push_back(rfPassAllPC);
 		m_dmr3NetRewrites.push_back(netPassAllPC);
@@ -1879,16 +1870,15 @@ bool CDMRGateway::createDMRNetwork3()
 	return true;
 }
 
-bool CDMRGateway::createDMRNetwork4()
-{
-	std::string address  = m_conf.getDMRNetwork4Address();
-	unsigned short port  = m_conf.getDMRNetwork4Port();
+bool CDMRGateway::createDMRNetwork4() {
+	std::string address = m_conf.getDMRNetwork4Address();
+	unsigned short port = m_conf.getDMRNetwork4Port();
 	unsigned short local = m_conf.getDMRNetwork4Local();
-	unsigned int id      = m_conf.getDMRNetwork4Id();
+	unsigned int id = m_conf.getDMRNetwork4Id();
 	std::string password = m_conf.getDMRNetwork4Password();
-	bool location        = m_conf.getDMRNetwork4Location();
-	bool debug           = m_conf.getDMRNetwork4Debug();
-	m_dmr4Name           = m_conf.getDMRNetwork4Name();
+	bool location = m_conf.getDMRNetwork4Location();
+	bool debug = m_conf.getDMRNetwork4Debug();
+	m_dmr4Name = m_conf.getDMRNetwork4Name();
 
 	if (id == 0U)
 		id = m_repeater->getId();
@@ -1940,8 +1930,8 @@ bool CDMRGateway::createDMRNetwork4()
 		else
 			LogInfo("    Rewrite Net: %u:TG%u-TG%u -> %u:TG%u-TG%u", (*it).m_toSlot, (*it).m_toTG, (*it).m_toTG + (*it).m_range - 1U, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U);
 
-		CRewriteTG* rfRewrite = new CRewriteTG(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
-		CRewriteTG* netRewrite = new CRewriteTG(m_dmr4Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
+		CRewriteTG *rfRewrite = new CRewriteTG(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteTG *netRewrite = new CRewriteTG(m_dmr4Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
 
 		m_dmr4RFRewrites.push_back(rfRewrite);
 		m_dmr4NetRewrites.push_back(netRewrite);
@@ -1954,7 +1944,7 @@ bool CDMRGateway::createDMRNetwork4()
 		else
 			LogInfo("    Rewrite RF: %u:%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewritePC* rewrite = new CRewritePC(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewritePC *rewrite = new CRewritePC(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr4RFRewrites.push_back(rewrite);
 	}
@@ -1966,7 +1956,7 @@ bool CDMRGateway::createDMRNetwork4()
 		else
 			LogInfo("    Rewrite RF: %u:TG%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewriteType* rewrite = new CRewriteType(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewriteType *rewrite = new CRewriteType(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr4RFRewrites.push_back(rewrite);
 	}
@@ -1978,7 +1968,7 @@ bool CDMRGateway::createDMRNetwork4()
 		else
 			LogInfo("    Rewrite Net: %u:%u-%u -> %u:TG%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toTG);
 
-		CRewriteSrc* rewrite = new CRewriteSrc(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteSrc *rewrite = new CRewriteSrc(m_dmr4Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
 
 		m_dmr4NetRewrites.push_back(rewrite);
 	}
@@ -1987,7 +1977,7 @@ bool CDMRGateway::createDMRNetwork4()
 	for (std::vector<CTGDynRewriteStruct>::const_iterator it = dynRewrites.begin(); it != dynRewrites.end(); ++it) {
 		LogInfo("    Dyn Rewrite: %u:TG%u-%u:TG%u <-> %u:TG%u (disc %u:%u) (status %u:%u) (%u exclusions)", (*it).m_slot, (*it).m_fromTG, (*it).m_slot, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_slot, (*it).m_toTG, (*it).m_slot, (*it).m_discPC, (*it).m_slot, (*it).m_statusPC, (*it).m_exclTGs.size());
 
-		CDynVoice* voice = NULL;
+		CDynVoice *voice = NULL;
 		if (m_conf.getVoiceEnabled()) {
 			std::string language = m_conf.getVoiceLanguage();
 			std::string directory = m_conf.getVoiceDirectory();
@@ -2002,8 +1992,8 @@ bool CDMRGateway::createDMRNetwork4()
 			}
 		}
 
-		CRewriteDynTGNet* netRewriteDynTG = new CRewriteDynTGNet(m_dmr4Name, (*it).m_slot, (*it).m_toTG);
-		CRewriteDynTGRF* rfRewriteDynTG = new CRewriteDynTGRF(m_dmr4Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
+		CRewriteDynTGNet *netRewriteDynTG = new CRewriteDynTGNet(m_dmr4Name, (*it).m_slot, (*it).m_toTG);
+		CRewriteDynTGRF *rfRewriteDynTG = new CRewriteDynTGRF(m_dmr4Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
 
 		m_dmr4RFRewrites.push_back(rfRewriteDynTG);
 		m_dmr4NetRewrites.push_back(netRewriteDynTG);
@@ -2014,8 +2004,8 @@ bool CDMRGateway::createDMRNetwork4()
 	for (std::vector<CIdRewriteStruct>::const_iterator it = idRewrites.begin(); it != idRewrites.end(); ++it) {
 		LogInfo("    Rewrite Id: %u <-> %u", (*it).m_rfId, (*it).m_netId);
 
-		CRewriteSrcId* rewriteSrcId = new CRewriteSrcId(m_dmr4Name, (*it).m_rfId, (*it).m_netId);
-		CRewriteDstId* rewriteDstId = new CRewriteDstId(m_dmr4Name, (*it).m_netId, (*it).m_rfId);
+		CRewriteSrcId *rewriteSrcId = new CRewriteSrcId(m_dmr4Name, (*it).m_rfId, (*it).m_netId);
+		CRewriteDstId *rewriteDstId = new CRewriteDstId(m_dmr4Name, (*it).m_netId, (*it).m_rfId);
 
 		m_dmr4SrcRewrites.push_back(rewriteSrcId);
 		m_dmr4NetRewrites.push_back(rewriteDstId);
@@ -2025,8 +2015,8 @@ bool CDMRGateway::createDMRNetwork4()
 	for (std::vector<unsigned int>::const_iterator it = tgPassAll.begin(); it != tgPassAll.end(); ++it) {
 		LogInfo("    Pass All TG: %u", *it);
 
-		CPassAllTG* rfPassAllTG = new CPassAllTG(m_dmr4Name, *it);
-		CPassAllTG* netPassAllTG = new CPassAllTG(m_dmr4Name, *it);
+		CPassAllTG *rfPassAllTG = new CPassAllTG(m_dmr4Name, *it);
+		CPassAllTG *netPassAllTG = new CPassAllTG(m_dmr4Name, *it);
 
 		m_dmr4Passalls.push_back(rfPassAllTG);
 		m_dmr4NetRewrites.push_back(netPassAllTG);
@@ -2036,8 +2026,8 @@ bool CDMRGateway::createDMRNetwork4()
 	for (std::vector<unsigned int>::const_iterator it = pcPassAll.begin(); it != pcPassAll.end(); ++it) {
 		LogInfo("    Pass All PC: %u", *it);
 
-		CPassAllPC* rfPassAllPC = new CPassAllPC(m_dmr4Name, *it);
-		CPassAllPC* netPassAllPC = new CPassAllPC(m_dmr4Name, *it);
+		CPassAllPC *rfPassAllPC = new CPassAllPC(m_dmr4Name, *it);
+		CPassAllPC *netPassAllPC = new CPassAllPC(m_dmr4Name, *it);
 
 		m_dmr4Passalls.push_back(rfPassAllPC);
 		m_dmr4NetRewrites.push_back(netPassAllPC);
@@ -2048,16 +2038,15 @@ bool CDMRGateway::createDMRNetwork4()
 	return true;
 }
 
-bool CDMRGateway::createDMRNetwork5()
-{
-	std::string address  = m_conf.getDMRNetwork5Address();
-	unsigned short port  = m_conf.getDMRNetwork5Port();
+bool CDMRGateway::createDMRNetwork5() {
+	std::string address = m_conf.getDMRNetwork5Address();
+	unsigned short port = m_conf.getDMRNetwork5Port();
 	unsigned short local = m_conf.getDMRNetwork5Local();
-	unsigned int id      = m_conf.getDMRNetwork5Id();
+	unsigned int id = m_conf.getDMRNetwork5Id();
 	std::string password = m_conf.getDMRNetwork5Password();
-	bool location        = m_conf.getDMRNetwork5Location();
-	bool debug           = m_conf.getDMRNetwork5Debug();
-	m_dmr5Name           = m_conf.getDMRNetwork5Name();
+	bool location = m_conf.getDMRNetwork5Location();
+	bool debug = m_conf.getDMRNetwork5Debug();
+	m_dmr5Name = m_conf.getDMRNetwork5Name();
 
 	if (id == 0U)
 		id = m_repeater->getId();
@@ -2094,8 +2083,9 @@ bool CDMRGateway::createDMRNetwork5()
 	}
 
 #if defined(USE_GPSD)
-	if (location && (m_gpsd != NULL))
+	if (location && (m_gpsd != NULL)) {
 		m_gpsd->addNetwork(m_dmrNetwork5);
+	}
 #endif
 
 	std::vector<CTGRewriteStruct> tgRewrites = m_conf.getDMRNetwork5TGRewrites();
@@ -2109,8 +2099,8 @@ bool CDMRGateway::createDMRNetwork5()
 		else
 			LogInfo("    Rewrite Net: %u:TG%u-TG%u -> %u:TG%u-TG%u", (*it).m_toSlot, (*it).m_toTG, (*it).m_toTG + (*it).m_range - 1U, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U);
 
-		CRewriteTG* rfRewrite = new CRewriteTG(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
-		CRewriteTG* netRewrite = new CRewriteTG(m_dmr5Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
+		CRewriteTG *rfRewrite = new CRewriteTG(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteTG *netRewrite = new CRewriteTG(m_dmr5Name, (*it).m_toSlot, (*it).m_toTG, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_range);
 
 		m_dmr5RFRewrites.push_back(rfRewrite);
 		m_dmr5NetRewrites.push_back(netRewrite);
@@ -2123,7 +2113,7 @@ bool CDMRGateway::createDMRNetwork5()
 		else
 			LogInfo("    Rewrite RF: %u:%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewritePC* rewrite = new CRewritePC(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewritePC *rewrite = new CRewritePC(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr5RFRewrites.push_back(rewrite);
 	}
@@ -2135,7 +2125,7 @@ bool CDMRGateway::createDMRNetwork5()
 		else
 			LogInfo("    Rewrite RF: %u:TG%u-%u -> %u:%u-%u", (*it).m_fromSlot, (*it).m_fromTG, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toId, (*it).m_toId + (*it).m_range - 1U);
 
-		CRewriteType* rewrite = new CRewriteType(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
+		CRewriteType *rewrite = new CRewriteType(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromTG, (*it).m_toSlot, (*it).m_toId, (*it).m_range);
 
 		m_dmr5RFRewrites.push_back(rewrite);
 	}
@@ -2147,7 +2137,7 @@ bool CDMRGateway::createDMRNetwork5()
 		else
 			LogInfo("    Rewrite Net: %u:%u-%u -> %u:TG%u", (*it).m_fromSlot, (*it).m_fromId, (*it).m_fromId + (*it).m_range - 1U, (*it).m_toSlot, (*it).m_toTG);
 
-		CRewriteSrc* rewrite = new CRewriteSrc(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
+		CRewriteSrc *rewrite = new CRewriteSrc(m_dmr5Name, (*it).m_fromSlot, (*it).m_fromId, (*it).m_toSlot, (*it).m_toTG, (*it).m_range);
 
 		m_dmr5NetRewrites.push_back(rewrite);
 	}
@@ -2156,7 +2146,7 @@ bool CDMRGateway::createDMRNetwork5()
 	for (std::vector<CTGDynRewriteStruct>::const_iterator it = dynRewrites.begin(); it != dynRewrites.end(); ++it) {
 		LogInfo("    Dyn Rewrite: %u:TG%u-%u:TG%u <-> %u:TG%u (disc %u:%u) (status %u:%u) (%u exclusions)", (*it).m_slot, (*it).m_fromTG, (*it).m_slot, (*it).m_fromTG + (*it).m_range - 1U, (*it).m_slot, (*it).m_toTG, (*it).m_slot, (*it).m_discPC, (*it).m_slot, (*it).m_statusPC, (*it).m_exclTGs.size());
 
-		CDynVoice* voice = NULL;
+		CDynVoice *voice = NULL;
 		if (m_conf.getVoiceEnabled()) {
 			std::string language = m_conf.getVoiceLanguage();
 			std::string directory = m_conf.getVoiceDirectory();
@@ -2171,8 +2161,8 @@ bool CDMRGateway::createDMRNetwork5()
 			}
 		}
 
-		CRewriteDynTGNet* netRewriteDynTG = new CRewriteDynTGNet(m_dmr5Name, (*it).m_slot, (*it).m_toTG);
-		CRewriteDynTGRF* rfRewriteDynTG = new CRewriteDynTGRF(m_dmr5Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
+		CRewriteDynTGNet *netRewriteDynTG = new CRewriteDynTGNet(m_dmr5Name, (*it).m_slot, (*it).m_toTG);
+		CRewriteDynTGRF *rfRewriteDynTG = new CRewriteDynTGRF(m_dmr5Name, (*it).m_slot, (*it).m_fromTG, (*it).m_toTG, (*it).m_discPC, (*it).m_statusPC, (*it).m_range, (*it).m_exclTGs, netRewriteDynTG, voice);
 
 		m_dmr5RFRewrites.push_back(rfRewriteDynTG);
 		m_dmr5NetRewrites.push_back(netRewriteDynTG);
@@ -2183,8 +2173,8 @@ bool CDMRGateway::createDMRNetwork5()
 	for (std::vector<CIdRewriteStruct>::const_iterator it = idRewrites.begin(); it != idRewrites.end(); ++it) {
 		LogInfo("    Rewrite Id: %u <-> %u", (*it).m_rfId, (*it).m_netId);
 
-		CRewriteSrcId* rewriteSrcId = new CRewriteSrcId(m_dmr5Name, (*it).m_rfId, (*it).m_netId);
-		CRewriteDstId* rewriteDstId = new CRewriteDstId(m_dmr5Name, (*it).m_netId, (*it).m_rfId);
+		CRewriteSrcId *rewriteSrcId = new CRewriteSrcId(m_dmr5Name, (*it).m_rfId, (*it).m_netId);
+		CRewriteDstId *rewriteDstId = new CRewriteDstId(m_dmr5Name, (*it).m_netId, (*it).m_rfId);
 
 		m_dmr5SrcRewrites.push_back(rewriteSrcId);
 		m_dmr5NetRewrites.push_back(rewriteDstId);
@@ -2194,8 +2184,8 @@ bool CDMRGateway::createDMRNetwork5()
 	for (std::vector<unsigned int>::const_iterator it = tgPassAll.begin(); it != tgPassAll.end(); ++it) {
 		LogInfo("    Pass All TG: %u", *it);
 
-		CPassAllTG* rfPassAllTG = new CPassAllTG(m_dmr5Name, *it);
-		CPassAllTG* netPassAllTG = new CPassAllTG(m_dmr5Name, *it);
+		CPassAllTG *rfPassAllTG = new CPassAllTG(m_dmr5Name, *it);
+		CPassAllTG *netPassAllTG = new CPassAllTG(m_dmr5Name, *it);
 
 		m_dmr5Passalls.push_back(rfPassAllTG);
 		m_dmr5NetRewrites.push_back(netPassAllTG);
@@ -2205,8 +2195,8 @@ bool CDMRGateway::createDMRNetwork5()
 	for (std::vector<unsigned int>::const_iterator it = pcPassAll.begin(); it != pcPassAll.end(); ++it) {
 		LogInfo("    Pass All PC: %u", *it);
 
-		CPassAllPC* rfPassAllPC = new CPassAllPC(m_dmr5Name, *it);
-		CPassAllPC* netPassAllPC = new CPassAllPC(m_dmr5Name, *it);
+		CPassAllPC *rfPassAllPC = new CPassAllPC(m_dmr5Name, *it);
+		CPassAllPC *netPassAllPC = new CPassAllPC(m_dmr5Name, *it);
 
 		m_dmr5Passalls.push_back(rfPassAllPC);
 		m_dmr5NetRewrites.push_back(netPassAllPC);
@@ -2217,9 +2207,8 @@ bool CDMRGateway::createDMRNetwork5()
 	return true;
 }
 
-bool CDMRGateway::createXLXNetwork()
-{
-	std::string fileName    = m_conf.getXLXNetworkFile();
+bool CDMRGateway::createXLXNetwork() {
+	std::string fileName = m_conf.getXLXNetworkFile();
 	unsigned int reloadTime = m_conf.getXLXNetworkReloadTime();
 
 	m_xlxReflectors = new CReflectors(fileName, reloadTime);
@@ -2230,39 +2219,42 @@ bool CDMRGateway::createXLXNetwork()
 		return false;
 	}
 
-	m_xlxLocal         = m_conf.getXLXNetworkLocal();
-	m_xlxPort          = m_conf.getXLXNetworkPort();
-	m_xlxPassword      = m_conf.getXLXNetworkPassword();
-	m_xlxId            = m_conf.getXLXNetworkId();
-	m_xlxDebug         = m_conf.getXLXNetworkDebug();
-	m_xlxUserControl   = m_conf.getXLXNetworkUserControl();
+	m_xlxLocal = m_conf.getXLXNetworkLocal();
+	m_xlxPort = m_conf.getXLXNetworkPort();
+	m_xlxPassword = m_conf.getXLXNetworkPassword();
+	m_xlxId = m_conf.getXLXNetworkId();
+	m_xlxDebug = m_conf.getXLXNetworkDebug();
+	m_xlxUserControl = m_conf.getXLXNetworkUserControl();
 
-	if (m_xlxId == 0U)
+	if (m_xlxId == 0U) {
 		m_xlxId = m_repeater->getId();
+	}
 
-	m_xlxSlot    = m_conf.getXLXNetworkSlot();
-	m_xlxTG      = m_conf.getXLXNetworkTG();
-	m_xlxBase    = m_conf.getXLXNetworkBase();
+	m_xlxSlot = m_conf.getXLXNetworkSlot();
+	m_xlxTG = m_conf.getXLXNetworkTG();
+	m_xlxBase = m_conf.getXLXNetworkBase();
 	m_xlxStartup = m_conf.getXLXNetworkStartup();
-	m_xlxModule  = m_conf.getXLXNetworkModule();
+	m_xlxModule = m_conf.getXLXNetworkModule();
 
-	unsigned int xlxRelink  = m_conf.getXLXNetworkRelink();
+	unsigned int xlxRelink = m_conf.getXLXNetworkRelink();
 
 	LogInfo("XLX Network Parameters");
 	LogInfo("    Id: %u", m_xlxId);
 	LogInfo("    Hosts file: %s", fileName.c_str());
 	LogInfo("    Reload time: %u minutes", reloadTime);
-	if (m_xlxLocal > 0U)
+	if (m_xlxLocal > 0U) {
 		LogInfo("    Local: %hu", m_xlxLocal);
-	else
+	} else {
 		LogInfo("    Local: random");
+	}
 	LogInfo("    Port: %hu", m_xlxPort);
 	LogInfo("    Slot: %u", m_xlxSlot);
 	LogInfo("    TG: %u", m_xlxTG);
 	LogInfo("    Base: %u", m_xlxBase);
 
-	if (m_xlxStartup != "4000")
+	if (m_xlxStartup != "4000") {
 		LogInfo("    Startup: XLX%s", m_xlxStartup.c_str());
+	}
 
 	if (xlxRelink > 0U) {
 		m_xlxRelink.setTimeout(xlxRelink * 60U);
@@ -2271,16 +2263,19 @@ bool CDMRGateway::createXLXNetwork()
 		LogInfo("    Relink: disabled");
 	}
 
-	if (m_xlxUserControl)
+	if (m_xlxUserControl) {
 		LogInfo("    User Control: enabled");
-	else
+	} else {
 		LogInfo("    User Control: disabled");
+	}
 
-	if (m_xlxModule != 0U)
+	if (m_xlxModule != 0U) {
 		LogInfo("    Module: %c", m_xlxModule);
+	}
 
-	if (m_xlxStartup != "4000")
+	if (m_xlxStartup != "4000") {
 		linkXLX(m_xlxStartup);
+	}
 
 	m_rptRewrite = new CRewriteTG("XLX", XLX_SLOT, XLX_TG, m_xlxSlot, m_xlxTG, 1U);
 	m_xlxRewrite = new CRewriteTG("XLX", m_xlxSlot, m_xlxTG, XLX_SLOT, XLX_TG, 1U);
@@ -2288,8 +2283,7 @@ bool CDMRGateway::createXLXNetwork()
 	return true;
 }
 
-bool CDMRGateway::createDynamicTGControl()
-{
+bool CDMRGateway::createDynamicTGControl() {
 	unsigned short port = m_conf.getDynamicTGControlPort();
 
 	m_socket = new CUDPSocket(port);
@@ -2304,9 +2298,8 @@ bool CDMRGateway::createDynamicTGControl()
 	return true;
 }
 
-bool CDMRGateway::linkXLX(const std::string &number)
-{
-	CReflector* reflector = m_xlxReflectors->find(number);
+bool CDMRGateway::linkXLX(const std::string &number) {
+	CReflector *reflector = m_xlxReflectors->find(number);
 	if (reflector == NULL)
 		return false;
 
@@ -2334,9 +2327,9 @@ bool CDMRGateway::linkXLX(const std::string &number)
 
 	m_xlxNumber = number;
 	if (m_xlxModule != 0U)
-		m_xlxRoom  = ((int(m_xlxModule) - 64U) + 4000U);
+		m_xlxRoom = ((int(m_xlxModule) - 64U) + 4000U);
 	else
-		m_xlxRoom  = reflector->m_startup;
+		m_xlxRoom = reflector->m_startup;
 	m_xlxReflector = 4000U;
 
 	LogMessage("XLX, Connecting to XLX%s", m_xlxNumber.c_str());
@@ -2346,8 +2339,7 @@ bool CDMRGateway::linkXLX(const std::string &number)
 	return true;
 }
 
-void CDMRGateway::unlinkXLX()
-{
+void CDMRGateway::unlinkXLX() {
 	if (m_xlxNetwork != NULL) {
 		m_xlxNetwork->close(true);
 		delete m_xlxNetwork;
@@ -2358,8 +2350,7 @@ void CDMRGateway::unlinkXLX()
 	m_xlxRelink.stop();
 }
 
-void CDMRGateway::writeXLXLink(unsigned int srcId, unsigned int dstId, CDMRNetwork* network)
-{
+void CDMRGateway::writeXLXLink(unsigned int srcId, unsigned int dstId, CDMRNetwork *network) {
 	assert(network != NULL);
 
 	unsigned int streamId = ::rand() + 1U;
@@ -2413,16 +2404,14 @@ void CDMRGateway::writeXLXLink(unsigned int srcId, unsigned int dstId, CDMRNetwo
 	}
 }
 
-bool CDMRGateway::rewrite(std::vector<CRewrite*>& rewrites, CDMRData & data, bool trace)
-{
+bool CDMRGateway::rewrite(std::vector<CRewrite*>& rewrites, CDMRData & data, bool trace) {
 	for (std::vector<CRewrite*>::iterator it = rewrites.begin(); it != rewrites.end(); ++it)
 		if ((*it)->process(data, trace))
 			return true;
 	return false;
 }
 
-unsigned int CDMRGateway::getConfig(const std::string& name, unsigned char* buffer)
-{
+unsigned int CDMRGateway::getConfig(const std::string &name, unsigned char *buffer) {
 	assert(buffer != NULL);
 
 	float lat = m_conf.getInfoLatitude();
@@ -2439,9 +2428,9 @@ unsigned int CDMRGateway::getConfig(const std::string& name, unsigned char* buff
 	else if (height < 0)
 		height = 0;
 
-	std::string location    = m_conf.getInfoLocation();
+	std::string location = m_conf.getInfoLocation();
 	std::string description = m_conf.getInfoDescription();
-	std::string url         = m_conf.getInfoURL();
+	std::string url = m_conf.getInfoURL();
 
 	::sprintf((char*)buffer, "%8.8s%9.9s%9.9s%2.2s%2.2s%+08.4f%+09.4f%03d%-20.20s%-19.19s%c%-124.124s%40.40s%40.40s",
 		m_config + 0U, m_config + 8U, m_config + 17U, m_config + 26U, m_config + 28U,
@@ -2467,11 +2456,11 @@ unsigned int CDMRGateway::getConfig(const std::string& name, unsigned char* buff
 	return (unsigned int)::strlen((char*)buffer);
 }
 
-void CDMRGateway::processRadioPosition()
-{
+void CDMRGateway::processRadioPosition() {
 	unsigned char buffer[50U];
 	unsigned int length;
 	bool ret = m_repeater->readRadioPosition(buffer, length);
+
 	if (!ret)
 		return;
 
@@ -2491,8 +2480,7 @@ void CDMRGateway::processRadioPosition()
 		m_dmrNetwork5->writeRadioPosition(buffer, length);
 }
 
-void CDMRGateway::processTalkerAlias()
-{
+void CDMRGateway::processTalkerAlias() {
 	unsigned char buffer[50U];
 	unsigned int length;
 	bool ret = m_repeater->readTalkerAlias(buffer, length);
@@ -2515,25 +2503,25 @@ void CDMRGateway::processTalkerAlias()
 		m_dmrNetwork5->writeTalkerAlias(buffer, length);
 }
 
-void CDMRGateway::createAPRS()
-{
-	if (!m_conf.getAPRSEnabled())
+void CDMRGateway::createAPRS() {
+	if (!m_conf.getAPRSEnabled()) {
 		return;
+	}
 
 	std::string address = m_conf.getAPRSAddress();
 	unsigned short port = m_conf.getAPRSPort();
-	std::string suffix  = m_conf.getAPRSSuffix();
-	bool debug          = m_conf.getDebug();
+	std::string suffix = m_conf.getAPRSSuffix();
+	bool debug = m_conf.getDebug();
 
 	m_writer = new CAPRSWriter(m_callsign, suffix, address, port, debug);
 
-	std::string desc    = m_conf.getAPRSDescription();
+	std::string desc = m_conf.getAPRSDescription();
 
 	m_writer->setInfo(m_txFrequency, m_rxFrequency, desc);
 
-	float latitude  = m_conf.getInfoLatitude();
+	float latitude = m_conf.getInfoLatitude();
 	float longitude = m_conf.getInfoLongitude();
-	int height      = m_conf.getInfoHeight();
+	int height = m_conf.getInfoHeight();
 
 	m_writer->setLocation(latitude, longitude, height);
 
@@ -2545,13 +2533,13 @@ void CDMRGateway::createAPRS()
 	}
 
 #if defined(USE_GPSD)
-	if (m_gpsd != NULL)
+	if (m_gpsd != NULL) {
 		m_gpsd->setAPRS(m_writer);
+	}
 #endif
 }
 
-void CDMRGateway::processDynamicTGControl()
-{
+void CDMRGateway::processDynamicTGControl() {
 	unsigned char buffer[100U];
 	sockaddr_storage address;
 	unsigned int addrlen;
@@ -2562,8 +2550,8 @@ void CDMRGateway::processDynamicTGControl()
 	buffer[len] = '\0';
 
 	if (::memcmp(buffer + 0U, "DynTG", 5U) == 0) {
-		char* pSlot = ::strtok((char*)(buffer + 5U), ", \r\n");
-		char* pTG   = ::strtok(NULL, ", \r\n");
+		char *pSlot = ::strtok((char*)(buffer + 5U), ", \r\n");
+		char *pTG = ::strtok(NULL, ", \r\n");
 
 		if (pSlot == NULL || pTG == NULL) {
 			LogWarning("Malformed dynamic TG control message");
@@ -2571,7 +2559,7 @@ void CDMRGateway::processDynamicTGControl()
 		}
 
 		unsigned int slot = (unsigned int)::atoi(pSlot);
-		unsigned int tg   = (unsigned int)::atoi(pTG);
+		unsigned int tg = (unsigned int)::atoi(pTG);
 
 		for (std::vector<CRewriteDynTGRF*>::iterator it = m_dynRF.begin(); it != m_dynRF.end(); ++it)
 			(*it)->tgChange(slot, tg);
@@ -2580,8 +2568,7 @@ void CDMRGateway::processDynamicTGControl()
 	}
 }
 
-void CDMRGateway::remoteControl()
-{
+void CDMRGateway::remoteControl() {
 	if (m_remoteControl == NULL)
 		return;
 
@@ -2590,49 +2577,61 @@ void CDMRGateway::remoteControl()
 		case RCD_ENABLE_NETWORK1:
 			processEnableCommand(m_dmrNetwork1, "DMR Network 1", m_network1Enabled, true);
 			break;
+
 		case RCD_ENABLE_NETWORK2:
 			processEnableCommand(m_dmrNetwork2, "DMR Network 2", m_network2Enabled, true);
 			break;
+
 		case RCD_ENABLE_NETWORK3:
 			processEnableCommand(m_dmrNetwork3, "DMR Network 3", m_network3Enabled, true);
 			break;
+
 		case RCD_ENABLE_NETWORK4:
 			processEnableCommand(m_dmrNetwork4, "DMR Network 4", m_network4Enabled, true);
 			break;
+
 		case RCD_ENABLE_NETWORK5:
 			processEnableCommand(m_dmrNetwork5, "DMR Network 5", m_network5Enabled, true);
 			break;
-		case RCD_ENABLE_XLX:
+
+		case RCD_ENABLE_XLX: {
 			if (m_xlxVoice != NULL) {
 				m_xlxVoice->reset();
 			}
 			processEnableCommand(m_xlxNetwork, "XLX Network", m_networkXlxEnabled, true);
 			break;
+		}
+
 		case RCD_DISABLE_NETWORK1:
 			processEnableCommand(m_dmrNetwork1, "DMR Network 1", m_network1Enabled, false);
 			break;
+
 		case RCD_DISABLE_NETWORK2:
 			processEnableCommand(m_dmrNetwork2, "DMR Network 2", m_network2Enabled, false);
 			break;
+
 		case RCD_DISABLE_NETWORK3:
 			processEnableCommand(m_dmrNetwork3, "DMR Network 3", m_network3Enabled, false);
 			break;
+
 		case RCD_DISABLE_NETWORK4:
 			processEnableCommand(m_dmrNetwork4, "DMR Network 4", m_network4Enabled, false);
 			break;
+
 		case RCD_DISABLE_NETWORK5:
 			processEnableCommand(m_dmrNetwork5, "DMR Network 5", m_network5Enabled, false);
 			break;
+
 		case RCD_DISABLE_XLX:
 			processEnableCommand(m_xlxNetwork, "XLX Network", m_networkXlxEnabled, false);
 			break;
+
 		default:
 			break;
 	}
 }
 
-void CDMRGateway::processEnableCommand(CDMRNetwork* network, const std::string& name, bool& mode, bool enabled)
-{
+void CDMRGateway::processEnableCommand(CDMRNetwork *network, const std::string &name, bool &mode, bool enabled) {
 	LogDebug("Setting '%s' mode current=%s new=%s", name.c_str(), mode ? "true" : "false", enabled ? "true" : "false");
 
 	if (network != NULL) {
@@ -2641,8 +2640,7 @@ void CDMRGateway::processEnableCommand(CDMRNetwork* network, const std::string& 
 	}
 }
 
-void CDMRGateway::buildNetworkStatusString(std::string &str)
-{
+void CDMRGateway::buildNetworkStatusString(std::string &str) {
 	str = "";
 	buildNetworkStatusNetworkString(str, "xlx", m_xlxNetwork, m_networkXlxEnabled);
 	str += " ";
@@ -2657,13 +2655,11 @@ void CDMRGateway::buildNetworkStatusString(std::string &str)
 	buildNetworkStatusNetworkString(str, "net5", m_dmrNetwork5, m_network5Enabled);
 }
 
-void CDMRGateway::buildNetworkStatusNetworkString(std::string &str, const std::string& name, CDMRNetwork* network, bool enabled)
-{
+void CDMRGateway::buildNetworkStatusNetworkString(std::string &str, const std::string &name, CDMRNetwork *network, bool enabled) {
 	str += name + ":"+ (((network == NULL) || (enabled == false)) ? "n/a" : (network->isConnected() ? "conn" : "disc"));
 }
 
-void CDMRGateway::buildNetworkHostsString(std::string &str)
-{
+void CDMRGateway::buildNetworkHostsString(std::string &str) {
 	str = "";
 	buildNetworkHostNetworkString(str, "xlx", m_xlxNetwork);
 	str += " ";
@@ -2678,8 +2674,7 @@ void CDMRGateway::buildNetworkHostsString(std::string &str)
 	buildNetworkHostNetworkString(str, "net5", m_dmrNetwork5);
 }
 
-void CDMRGateway::buildNetworkHostNetworkString(std::string &str, const std::string& name, CDMRNetwork* network)
-{
+void CDMRGateway::buildNetworkHostNetworkString(std::string &str, const std::string &name, CDMRNetwork *network) {
 	if (network && (network == m_xlxNetwork)) {
 		std::string module = ((m_xlxReflector >= 4001U && m_xlxReflector <= 4026U) ? ("_" + std::string(1, (('A' + (m_xlxReflector % 100U)) - 1U))) : "");
 		str += name + ":\"XLX" + m_xlxNumber + module + "\"";
