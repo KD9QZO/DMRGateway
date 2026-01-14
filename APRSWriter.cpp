@@ -37,6 +37,7 @@ CAPRSWriter::CAPRSWriter(const std::string &callsign, const std::string &suffix,
 		m_longitude(0.0F),
 		m_height(0),
 		m_desc(),
+		m_symbol(),
 		m_aprsAddr(),
 		m_aprsLen(0U),
 		m_aprsSocket() {
@@ -57,10 +58,11 @@ CAPRSWriter::CAPRSWriter(const std::string &callsign, const std::string &suffix,
 CAPRSWriter::~CAPRSWriter() {
 }
 
-void CAPRSWriter::setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc) {
+void CAPRSWriter::setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc, const std::string &symbol) {
 	m_txFrequency = txFrequency;
 	m_rxFrequency = rxFrequency;
 	m_desc = desc;
+	m_symbol = symbol;
 }
 
 void CAPRSWriter::setLocation(float latitude, float longitude, int height) {
@@ -107,26 +109,25 @@ void CAPRSWriter::sendIdFrame() {
 	}
 
 	char desc[200U];
-
 	if (m_txFrequency != 0U) {
 		float offset = float(int(m_rxFrequency) - int(m_txFrequency)) / 1000000.0F;
-		::sprintf(desc, "MMDVM Voice %.5LfMHz %c%.4lfMHz%s%s",
-				(long double)(m_txFrequency) / 1000000.0F,
-				offset < 0.0F ? '-' : '+',
-				::fabs(offset), m_desc.empty() ? "" : ", ", m_desc.c_str());
+		::sprintf(desc, "MMDVM Voice (DMR) %.5LfMHz %c%.4lfMHz%s%s",
+			(long double)(m_txFrequency) / 1000000.0F,
+			offset < 0.0F ? '-' : '+',
+			::fabs(offset), m_desc.empty() ? "" : ", ", m_desc.c_str());
 	} else {
-		::sprintf(desc, "MMDVM Voice%s%s", m_desc.empty() ? "" : ", ", m_desc.c_str());
+		::sprintf(desc, "MMDVM Voice (DMR)%s%s", m_desc.empty() ? "" : ", ", m_desc.c_str());
 	}
 
 	const char *band = "4m";
 	if (m_txFrequency >= 1200000000U) {
-		band = "1.2";
+		band = "23cm/1.2GHz";
 	} else if (m_txFrequency >= 902000000U) {
-		band = "915";
+		band = "33cm";
 	} else if (m_txFrequency >= 420000000U) {
-		band = "440";
+		band = "70cm";
 	} else if (m_txFrequency >= 219000000U) {
-		band = "220";
+		band = "1.25m/220MHz";
 	} else if (m_txFrequency >= 144000000U) {
 		band = "2m";
 	} else if (m_txFrequency >= 50000000U) {
@@ -157,6 +158,7 @@ void CAPRSWriter::sendIdFrame() {
 	::sprintf(lon, "%08.2lf", longitude);
 
 	std::string server = m_callsign;
+	std::string symbol = m_symbol;
 	size_t pos = server.find_first_of('-');
 	if (pos == std::string::npos) {
 		server.append("-S");
@@ -164,12 +166,15 @@ void CAPRSWriter::sendIdFrame() {
 		server.append("S");
 	}
 
+        if (symbol.empty())
+                symbol.append("D&");
+
 	char output[500U];
-	::sprintf(output, "%s>APDG03,TCPIP*,qAC,%s:!%s%cD%s%c&/A=%06.0f%s %s\r\n",
-			m_callsign.c_str(), server.c_str(),
-			lat, (m_latitude < 0.0F)  ? 'S' : 'N',
-			lon, (m_longitude < 0.0F) ? 'W' : 'E',
-			float(m_height) * 3.28F, band, desc);
+	::sprintf(output, "%s>APDG03,TCPIP*,qAC,%s:!%s%c%c%s%c%c/A=%06.0f%s %s\r\n",
+		m_callsign.c_str(), server.c_str(),
+		lat, (m_latitude < 0.0F)  ? 'S' : 'N', symbol[0],
+		lon, (m_longitude < 0.0F) ? 'W' : 'E', symbol[1],
+		float(m_height) * 3.28F, band, desc);
 
 	if (m_debug) {
 		LogDebug("APRS ==> %s", output);

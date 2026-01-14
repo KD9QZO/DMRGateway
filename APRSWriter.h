@@ -16,8 +16,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef	APRSWriter_H_
-#define	APRSWriter_H_
+#ifndef	APRSWriter_H
+#define	APRSWriter_H
 
 #include "UDPSocket.h"
 #include "Timer.h"
@@ -46,7 +46,7 @@ public:
 
 	bool open();
 
-	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc);
+	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc, const std::string &symbol);
 
 	void setLocation(float latitude, float longitude, int height);
 
@@ -64,6 +64,7 @@ private:
 	float m_longitude;
 	int m_height;
 	std::string m_desc;
+	std::string m_symbol;
 	sockaddr_storage m_aprsAddr;
 	unsigned int m_aprsLen;
 	CUDPSocket m_aprsSocket;

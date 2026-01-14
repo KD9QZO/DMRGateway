@@ -1,0 +1,20 @@
+[Unit]
+Description=DMRGateway Service
+# Description=Place this file in /etc/systemd/system
+# Description=KC1AWV 07 SEP 2021
+After=network-online.target
+Requires=networking.service
+
+[Service]
+Type=forking
+User=mmdvm
+Group=mmdvm
+Restart=on-failure
+RestartSec=3
+#ExecStart=/usr/local/bin/DMRGateway /etc/DMRGateway.ini
+ExecStart=/usr/local/bin/DMRGateway /usr/local/etc/DMRGateway.ini
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
