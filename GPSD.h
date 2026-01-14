@@ -16,8 +16,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef	GPSD_H
-#define	GPSD_H
+#ifndef GPSD_H_
+#define GPSD_H_
+
 
 #if defined(USE_GPSD)
 
@@ -30,14 +31,18 @@
 
 #include <gps.h>
 
+
+/**
+ * \brief Handle GPS functionality
+ */
 class CGPSD {
 public:
-	CGPSD(const std::string& address, const std::string& port);
+	CGPSD(const std::string &address, const std::string &port);
 	~CGPSD();
 
-	void addNetwork(CDMRNetwork* network);
+	void addNetwork(CDMRNetwork *network);
 
-	void setAPRS(CAPRSWriter* aprs);
+	void setAPRS(CAPRSWriter *aprs);
 
 	bool open();
 
@@ -46,16 +51,31 @@ public:
 	void close();
 
 private:
-	std::string               m_gpsdAddress;
-	std::string               m_gpsdPort;
-	struct gps_data_t         m_gpsdData;
-	CTimer                    m_idTimer;
+	/*! \brief The address on which the gpsd is listening */
+	std::string m_gpsdAddress;
+
+	/*! \brief The port on which the gpsd is listening */
+	std::string m_gpsdPort;
+
+	/*! \brief A structure to hold the GPS data */
+	struct gps_data_t m_gpsdData;
+
+	/**
+	 * \brief A structure to hold the GPS fix data
+	 *
+	 * \note This needed to be added to support newer \b gpsd versions.
+	 */
+	struct gps_fix_t m_gpsdFix;
+
+	CTimer m_idTimer;
 	std::vector<CDMRNetwork*> m_networks;
-	CAPRSWriter*              m_aprs;
+	CAPRSWriter *m_aprs;
 
 	void sendReport();
 };
 
-#endif
 
-#endif
+#endif	/* defined(USE_GPSD) */
+
+
+#endif	/* !GPSD_H_ */
