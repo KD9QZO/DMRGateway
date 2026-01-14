@@ -30,26 +30,22 @@ const unsigned int DISABLE_ARGS = 2U;
 
 const unsigned int BUFFER_LENGTH = 100U;
 
-CRemoteControl::CRemoteControl(CDMRGateway* host, const std::string address, unsigned short port) :
-m_host(host),
-m_socket(address, port),
-m_command(RCD_NONE),
-m_args()
-{
+CRemoteControl::CRemoteControl(CDMRGateway *host, const std::string address, unsigned short port):
+		m_host(host),
+		m_socket(address, port),
+		m_command(RCD_NONE),
+		m_args() {
 	assert(port > 0U);
 }
 
-CRemoteControl::~CRemoteControl()
-{
+CRemoteControl::~CRemoteControl() {
 }
 
-bool CRemoteControl::open()
-{
+bool CRemoteControl::open() {
 	return m_socket.open();
 }
 
-REMOTE_COMMAND CRemoteControl::getCommand()
-{
+REMOTE_COMMAND CRemoteControl::getCommand() {
 	m_command = RCD_NONE;
 	m_args.clear();
 
@@ -59,6 +55,7 @@ REMOTE_COMMAND CRemoteControl::getCommand()
 	sockaddr_storage address;
 	unsigned int addrlen;
 	int ret = m_socket.read((unsigned char*)buffer, BUFFER_LENGTH, address, addrlen);
+
 	if (ret > 0) {
 		buffer[ret] = '\0';
 
@@ -66,27 +63,29 @@ REMOTE_COMMAND CRemoteControl::getCommand()
 		::strcpy(command, buffer);
 
 		// Parse the original command into a vector of strings.
-		char* b = buffer;
-		char* p = NULL;
+		char *b = buffer;
+		char *p = NULL;
 		while ((p = ::strtok(b, " ")) != NULL) {
 			b = NULL;
 			m_args.push_back(std::string(p));
 		}
-		if (m_args.at(0U) == "enable" && m_args.size() >= ENABLE_ARGS) {
-			if (m_args.at(1U) == "net1")
+
+		if ((m_args.at(0U) == "enable") && (m_args.size() >= ENABLE_ARGS)) {
+			if (m_args.at(1U) == "net1") {
 				m_command = RCD_ENABLE_NETWORK1;
-			else if (m_args.at(1U) == "net2")
+			} else if (m_args.at(1U) == "net2") {
 				m_command = RCD_ENABLE_NETWORK2;
-			else if (m_args.at(1U) == "net3")
+			} else if (m_args.at(1U) == "net3") {
 				m_command = RCD_ENABLE_NETWORK3;
-			else if (m_args.at(1U) == "net4")
+			} else if (m_args.at(1U) == "net4") {
 				m_command = RCD_ENABLE_NETWORK4;
-			else if (m_args.at(1U) == "net5")
+			} else if (m_args.at(1U) == "net5") {
 				m_command = RCD_ENABLE_NETWORK5;
-			else if (m_args.at(1U) == "xlx")
+			} else if (m_args.at(1U) == "xlx") {
 				m_command = RCD_ENABLE_XLX;
-			else
+			} else {
 				replyStr = "KO";
+			}
 		} else if (m_args.at(0U) == "disable" && m_args.size() >= DISABLE_ARGS) {
 			if (m_args.at(1U) == "net1")
 				m_command = RCD_DISABLE_NETWORK1;
@@ -105,8 +104,7 @@ REMOTE_COMMAND CRemoteControl::getCommand()
 		} else if (m_args.at(0U) == "status") {
 			if (m_host != NULL) {
 				m_host->buildNetworkStatusString(replyStr);
-			}
-			else {
+			} else {
 				replyStr = "KO";
 			}
 
@@ -114,8 +112,7 @@ REMOTE_COMMAND CRemoteControl::getCommand()
 		} else if (m_args.at(0U) == "hosts") {
 			if (m_host != NULL) {
 				m_host->buildNetworkHostsString(replyStr);
-			}
-			else {
+			} else {
 				replyStr = "KO";
 			}
 
@@ -136,42 +133,38 @@ REMOTE_COMMAND CRemoteControl::getCommand()
 
 		m_socket.write((unsigned char*)replyStr.c_str(), (unsigned int)replyStr.length(), address, addrlen);
 	}
-	
+
 	return m_command;
 }
 
-unsigned int CRemoteControl::getArgCount() const
-{
+unsigned int CRemoteControl::getArgCount() const {
 	switch (m_command) {
 		default:
 			return 0U;
 	}
 }
 
-std::string CRemoteControl::getArgString(unsigned int n) const
-{
+std::string CRemoteControl::getArgString(unsigned int n) const {
 	switch (m_command) {
 		default:
 			return "";
 	}
 
-	if (n >= m_args.size())
+	if (n >= m_args.size()) {
 		return "";
+	}
 
 	return m_args.at(n);
 }
 
-unsigned int CRemoteControl::getArgUInt(unsigned int n) const
-{
+unsigned int CRemoteControl::getArgUInt(unsigned int n) const {
 	return (unsigned int)::atoi(getArgString(n).c_str());
 }
 
-int CRemoteControl::getArgInt(unsigned int n) const
-{
+int CRemoteControl::getArgInt(unsigned int n) const {
 	return ::atoi(getArgString(n).c_str());
 }
 
-void CRemoteControl::close()
-{
+void CRemoteControl::close() {
 	m_socket.close();
 }

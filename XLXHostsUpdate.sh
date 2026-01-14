@@ -1,4 +1,5 @@
-#! /bin/bash
+#!/usr/bin/env bash
+
 ###############################################################################
 #
 # XLXHostsupdate.sh
@@ -6,29 +7,29 @@
 # Copyright (C) 2016 by Tony Corbett G0WFV
 # Copyright (C) 2017 by Jonathan Naylor G4KLX
 #
-# Adapted to YSFHosts by Paul Nannery KC2VRJ on 6/28/2016 with all crdeit 
+# Adapted to YSFHosts by Paul Nannery KC2VRJ on 6/28/2016 with all credit
 # to G0WFV for the orignal script.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 ###############################################################################
 #
-# On a Linux based system, such as a Raspberry Pi, this script will perform all  
+# On a Linux based system, such as a Raspberry Pi, this script will perform all
 # the steps required to maintain the XLXHosts.txt (or similar) file for you.
 #
-# It is designed to run from crontab and will download the XLXHosts from the 
+# It is designed to run from crontab and will download the XLXHosts from the
 # master XLX DMR Master database and optionally keep a backup of previously
 # created files for you.
 #
@@ -41,7 +42,7 @@
 #
 # ... and add the following line to the bottom of the file ...
 #
-#     0  0  *  *  *  /path/to/script/XLXHostsupdate.sh /path/to/XLXHosts.txt 1>/dev/null 2>&1
+#     0  0  *  *  *  /path/to/script/XLXHostsUpdate.sh /path/to/XLXHosts.txt 1>/dev/null 2>&1
 #
 # ... where:
 #           /path/to/script/ should be replaced by the path to this script.
@@ -54,15 +55,15 @@
 # first argument as path to XLXHosts.txt.
 # default so script's directory if empty
 
-if [ -n "$1" ] ; then
-  XLXHOSTS="$1"
+if [ -n "$1" ]; then
+	XLXHOSTS="$1"
 else
-  XLXHOSTS="$(dirname $0)/XLXHosts.txt"
+	XLXHOSTS="$(dirname $0)/XLXHosts.txt"
 fi
 
 echo "Updating $XLXHOSTS ..."
 
-# How many XLXHosts files do you want backed up (0 = do not keep backups) 
+# How many XLXHosts files do you want backed up (0 = do not keep backups)
 XLXHOSTSFILEBACKUP=1
 
 ###############################################################################
