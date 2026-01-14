@@ -31,70 +31,66 @@ const unsigned int BUFFER_LENGTH = 500U;
 const unsigned int HOMEBREW_DATA_PACKET_LENGTH = 55U;
 
 
-CDMRNetwork::CDMRNetwork(const std::string& address, unsigned short port, unsigned short local, unsigned int id, const std::string& password, const std::string& name, bool location, bool debug) :
-m_addr(),
-m_addrLen(0U),
-m_id(NULL),
-m_password(password),
-m_name(name),
-m_location(location),
-m_debug(debug),
-m_socket(local),
-m_enabled(false),
-m_status(WAITING_CONNECT),
-m_retryTimer(1000U, 10U),
-m_timeoutTimer(1000U, 60U),
-m_buffer(NULL),
-m_salt(NULL),
-m_rxData(1000U, "DMR Network"),
-m_options(),
-m_configData(NULL),
-m_configLen(0U),
-m_beacon(false)
-{
+CDMRNetwork::CDMRNetwork(const std::string &address, unsigned short port, unsigned short local, unsigned int id, const std::string &password, const std::string &name, bool location, bool debug):
+		m_addr(),
+		m_addrLen(0U),
+		m_id(NULL),
+		m_password(password),
+		m_name(name),
+		m_location(location),
+		m_debug(debug),
+		m_socket(local),
+		m_enabled(false),
+		m_status(WAITING_CONNECT),
+		m_retryTimer(1000U, 10U),
+		m_timeoutTimer(1000U, 60U),
+		m_buffer(NULL),
+		m_salt(NULL),
+		m_rxData(1000U, "DMR Network"),
+		m_options(),
+		m_configData(NULL),
+		m_configLen(0U),
+		m_beacon(false) {
 	assert(!address.empty());
 	assert(port > 0U);
 	assert(id > 1000U);
 	assert(!password.empty());
 
-	if (CUDPSocket::lookup(address, port, m_addr, m_addrLen) != 0)
+	if (CUDPSocket::lookup(address, port, m_addr, m_addrLen) != 0) {
 		m_addrLen = 0U;
+	}
 
-	m_buffer   = new unsigned char[BUFFER_LENGTH];
-	m_salt     = new unsigned char[sizeof(uint32_t)];
-	m_id       = new uint8_t[4U];
+	m_buffer = new unsigned char[BUFFER_LENGTH];
+	m_salt = new unsigned char[sizeof(uint32_t)];
+	m_id = new uint8_t[4U];
 
-	m_id[0U] = id >> 24;
-	m_id[1U] = id >> 16;
-	m_id[2U] = id >> 8;
-	m_id[3U] = id >> 0;
+	m_id[0U] = (id >> 24);
+	m_id[1U] = (id >> 16);
+	m_id[2U] = (id >> 8);
+	m_id[3U] = (id >> 0);
 
 	CStopWatch stopWatch;
 	::srand(stopWatch.start());
 }
 
-CDMRNetwork::~CDMRNetwork()
-{
+CDMRNetwork::~CDMRNetwork() {
 	delete[] m_buffer;
 	delete[] m_salt;
 	delete[] m_id;
 }
 
-void CDMRNetwork::setOptions(const std::string& options)
-{
+void CDMRNetwork::setOptions(const std::string &options) {
 	m_options = options;
 }
 
-void CDMRNetwork::setConfig(const unsigned char* data, unsigned int len)
-{
+void CDMRNetwork::setConfig(const unsigned char *data, unsigned int len) {
 	m_configData = new unsigned char[len];
 	::memcpy(m_configData, data, len);
 
 	m_configLen = len;
 }
 
-bool CDMRNetwork::open()
-{
+bool CDMRNetwork::open() {
 	if (m_addrLen == 0U) {
 		LogError("%s, Could not lookup the address of the master", m_name.c_str());
 		return false;
@@ -109,16 +105,15 @@ bool CDMRNetwork::open()
 	return true;
 }
 
-void CDMRNetwork::enable(bool enabled)
-{
-        if (!enabled && m_enabled)
-                m_rxData.clear();
+void CDMRNetwork::enable(bool enabled) {
+	if (!enabled && m_enabled) {
+		m_rxData.clear();
+	}
 
-        m_enabled = enabled;
+	m_enabled = enabled;
 }
 
-bool CDMRNetwork::read(CDMRData& data)
-{
+bool CDMRNetwork::read(CDMRData &data) {
 	if (m_status != RUNNING)
 		return false;
 
@@ -135,11 +130,8 @@ bool CDMRNetwork::read(CDMRData& data)
 		return false;
 
 	unsigned char seqNo = m_buffer[4U];
-
-	unsigned int srcId = (m_buffer[5U] << 16) | (m_buffer[6U] << 8) | (m_buffer[7U] << 0);
-
-	unsigned int dstId = (m_buffer[8U] << 16) | (m_buffer[9U] << 8) | (m_buffer[10U] << 0);
-
+	unsigned int srcId = ((m_buffer[5U] << 16) | (m_buffer[6U] << 8) | (m_buffer[7U] << 0));
+	unsigned int dstId = ((m_buffer[8U] << 16) | (m_buffer[9U] << 8) | (m_buffer[10U] << 0));
 	unsigned int slotNo = (m_buffer[15U] & 0x80U) == 0x80U ? 2U : 1U;
 
 	FLCO flco = (m_buffer[15U] & 0x40U) == 0x40U ? FLCO_USER_USER : FLCO_GROUP;
@@ -147,8 +139,7 @@ bool CDMRNetwork::read(CDMRData& data)
 	unsigned int streamId;
 	::memcpy(&streamId, m_buffer + 16U, 4U);
 
-	unsigned char ber  = m_buffer[53U];
-
+	unsigned char ber = m_buffer[53U];
 	unsigned char rssi = m_buffer[54U];
 
 	data.setSeqNo(seqNo);
@@ -164,7 +155,7 @@ bool CDMRNetwork::read(CDMRData& data)
 	bool voiceSync = (m_buffer[15U] & 0x10U) == 0x10U;
 
 	if (dataSync) {
-		unsigned char dataType = m_buffer[15U] & 0x0FU;
+		unsigned char dataType = (m_buffer[15U] & 0x0FU);
 		data.setData(m_buffer + 20U);
 		data.setDataType(dataType);
 		data.setN(0U);
@@ -173,7 +164,7 @@ bool CDMRNetwork::read(CDMRData& data)
 		data.setDataType(DT_VOICE_SYNC);
 		data.setN(0U);
 	} else {
-		unsigned char n = m_buffer[15U] & 0x0FU;
+		unsigned char n = (m_buffer[15U] & 0x0FU);
 		data.setData(m_buffer + 20U);
 		data.setDataType(DT_VOICE);
 		data.setN(n);
@@ -182,28 +173,27 @@ bool CDMRNetwork::read(CDMRData& data)
 	return true;
 }
 
-bool CDMRNetwork::write(const CDMRData& data)
-{
+bool CDMRNetwork::write(const CDMRData &data) {
 	if (m_status != RUNNING)
 		return false;
 
 	unsigned char buffer[HOMEBREW_DATA_PACKET_LENGTH];
 	::memset(buffer, 0x00U, HOMEBREW_DATA_PACKET_LENGTH);
 
-	buffer[0U]  = 'D';
-	buffer[1U]  = 'M';
-	buffer[2U]  = 'R';
-	buffer[3U]  = 'D';
+	buffer[0U] = 'D';
+	buffer[1U] = 'M';
+	buffer[2U] = 'R';
+	buffer[3U] = 'D';
 
 	unsigned int srcId = data.getSrcId();
-	buffer[5U]  = srcId >> 16;
-	buffer[6U]  = srcId >> 8;
-	buffer[7U]  = srcId >> 0;
+	buffer[5U] = (srcId >> 16);
+	buffer[6U] = (srcId >> 8);
+	buffer[7U] = (srcId >> 0);
 
 	unsigned int dstId = data.getDstId();
-	buffer[8U]  = dstId >> 16;
-	buffer[9U]  = dstId >> 8;
-	buffer[10U] = dstId >> 0;
+	buffer[8U] = (dstId >> 16);
+	buffer[9U] = (dstId >> 8);
+	buffer[10U] = (dstId >> 0);
 
 	::memcpy(buffer + 11U, m_id, 4U);
 
@@ -231,7 +221,6 @@ bool CDMRNetwork::write(const CDMRData& data)
 	data.getData(buffer + 20U);
 
 	buffer[53U] = data.getBER();
-
 	buffer[54U] = data.getRSSI();
 
 	write(buffer, HOMEBREW_DATA_PACKET_LENGTH);
@@ -239,8 +228,7 @@ bool CDMRNetwork::write(const CDMRData& data)
 	return true;
 }
 
-bool CDMRNetwork::writeRadioPosition(const unsigned char* data, unsigned int length)
-{
+bool CDMRNetwork::writeRadioPosition(const unsigned char *data, unsigned int length) {
 	if (m_status != RUNNING)
 		return false;
 
@@ -250,32 +238,26 @@ bool CDMRNetwork::writeRadioPosition(const unsigned char* data, unsigned int len
 	unsigned char buffer[50U];
 
 	::memcpy(buffer + 0U, "DMRG", 4U);
-
 	::memcpy(buffer + 4U, m_id, 4U);
-
 	::memcpy(buffer + 8U, data + 4U, length - 4U);
 
 	return write(buffer, length);
 }
 
-bool CDMRNetwork::writeTalkerAlias(const unsigned char* data, unsigned int length)
-{
+bool CDMRNetwork::writeTalkerAlias(const unsigned char *data, unsigned int length) {
 	if (m_status != RUNNING)
 		return false;
 
 	unsigned char buffer[50U];
 
 	::memcpy(buffer + 0U, "DMRA", 4U);
-
 	::memcpy(buffer + 4U, m_id, 4U);
-
 	::memcpy(buffer + 8U, data + 4U, length - 4U);
 
 	return write(buffer, length);
 }
 
-bool CDMRNetwork::writeHomePosition(float latitude, float longitude)
-{
+bool CDMRNetwork::writeHomePosition(float latitude, float longitude) {
 	if (m_status != RUNNING)
 		return false;
 
@@ -285,26 +267,21 @@ bool CDMRNetwork::writeHomePosition(float latitude, float longitude)
 	char buffer[50U];
 
 	::memcpy(buffer + 0U, "RPTG", 4U);
-
 	::memcpy(buffer + 4U, m_id, 4U);
-
 	::sprintf(buffer + 8U, "%+08.4f%+09.4f", latitude, longitude);
 
 	return write((unsigned char*)buffer, 25U);
 }
 
-bool CDMRNetwork::isConnected() const
-{
+bool CDMRNetwork::isConnected() const {
 	return m_status == RUNNING;
 }
 
-std::string const CDMRNetwork::getName() const
-{
+std::string const CDMRNetwork::getName() const {
 	return m_name;
 }
 
-void CDMRNetwork::close(bool sayGoodbye)
-{
+void CDMRNetwork::close(bool sayGoodbye) {
 	LogMessage("%s, Closing DMR Network", m_name.c_str());
 
 	if (sayGoodbye && (m_status == RUNNING)) {
@@ -315,13 +292,11 @@ void CDMRNetwork::close(bool sayGoodbye)
 	}
 
 	m_socket.close();
-
 	m_retryTimer.stop();
 	m_timeoutTimer.stop();
 }
 
-void CDMRNetwork::clock(unsigned int ms)
-{
+void CDMRNetwork::clock(unsigned int ms) {
 	if (m_status == WAITING_CONNECT) {
 		m_retryTimer.clock(ms);
 		if (m_retryTimer.isRunning() && m_retryTimer.hasExpired()) {
@@ -389,6 +364,7 @@ void CDMRNetwork::clock(unsigned int ms)
 					m_timeoutTimer.start();
 					m_retryTimer.start();
 					break;
+
 				case WAITING_AUTHORISATION:
 					LogDebug("%s, Sending configuration", m_name.c_str());
 					writeConfig();
@@ -396,6 +372,7 @@ void CDMRNetwork::clock(unsigned int ms)
 					m_timeoutTimer.start();
 					m_retryTimer.start();
 					break;
+
 				case WAITING_CONFIG:
 					if (m_options.empty()) {
 						LogMessage("%s, Logged into the master successfully", m_name.c_str());
@@ -408,12 +385,14 @@ void CDMRNetwork::clock(unsigned int ms)
 					m_timeoutTimer.start();
 					m_retryTimer.start();
 					break;
+
 				case WAITING_OPTIONS:
 					LogMessage("%s, Logged into the master successfully", m_name.c_str());
 					m_status = RUNNING;
 					m_timeoutTimer.start();
 					m_retryTimer.start();
 					break;
+
 				default:
 					break;
 			}
@@ -438,18 +417,23 @@ void CDMRNetwork::clock(unsigned int ms)
 			case WAITING_LOGIN:
 				writeLogin();
 				break;
+
 			case WAITING_AUTHORISATION:
 				writeAuthorisation();
 				break;
+
 			case WAITING_OPTIONS:
 				writeOptions();
 				break;
+
 			case WAITING_CONFIG:
 				writeConfig();
 				break;
+
 			case RUNNING:
 				writePing();
 				break;
+
 			default:
 				break;
 		}
@@ -465,8 +449,7 @@ void CDMRNetwork::clock(unsigned int ms)
 	}
 }
 
-bool CDMRNetwork::writeLogin()
-{
+bool CDMRNetwork::writeLogin() {
 	unsigned char buffer[8U];
 
 	::memcpy(buffer + 0U, "RPTL", 4U);
@@ -475,8 +458,7 @@ bool CDMRNetwork::writeLogin()
 	return write(buffer, 8U);
 }
 
-bool CDMRNetwork::writeAuthorisation()
-{
+bool CDMRNetwork::writeAuthorisation() {
 	size_t size = m_password.size();
 
 	unsigned char* in = new unsigned char[size + sizeof(uint32_t)];
@@ -496,8 +478,7 @@ bool CDMRNetwork::writeAuthorisation()
 	return write(out, 40U);
 }
 
-bool CDMRNetwork::writeOptions()
-{
+bool CDMRNetwork::writeOptions() {
 	char buffer[300U];
 
 	::memcpy(buffer + 0U, "RPTO", 4U);
@@ -507,8 +488,7 @@ bool CDMRNetwork::writeOptions()
 	return write((unsigned char*)buffer, (unsigned int)m_options.length() + 8U);
 }
 
-bool CDMRNetwork::writeConfig()
-{
+bool CDMRNetwork::writeConfig() {
 	char buffer[400U];
 
 	::memcpy(buffer + 0U, "RPTC", 4U);
@@ -521,8 +501,7 @@ bool CDMRNetwork::writeConfig()
 	return write((unsigned char*)buffer, m_configLen + 8U);
 }
 
-bool CDMRNetwork::writePing()
-{
+bool CDMRNetwork::writePing() {
 	unsigned char buffer[11U];
 
 	::memcpy(buffer + 0U, "RPTPING", 7U);
@@ -531,8 +510,7 @@ bool CDMRNetwork::writePing()
 	return write(buffer, 11U);
 }
 
-bool CDMRNetwork::wantsBeacon()
-{
+bool CDMRNetwork::wantsBeacon() {
 	bool beacon = m_beacon;
 
 	m_beacon = false;
@@ -540,8 +518,7 @@ bool CDMRNetwork::wantsBeacon()
 	return beacon;
 }
 
-bool CDMRNetwork::write(const unsigned char* data, unsigned int length)
-{
+bool CDMRNetwork::write(const unsigned char* data, unsigned int length) {
 	assert(data != NULL);
 	assert(length > 0U);
 

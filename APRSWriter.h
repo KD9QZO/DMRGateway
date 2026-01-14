@@ -16,15 +16,15 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef	APRSWriter_H
-#define	APRSWriter_H
+#ifndef	APRSWriter_H_
+#define	APRSWriter_H_
 
 #include "UDPSocket.h"
 #include "Timer.h"
 
 #include <string>
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if (!defined(_WIN32) && !defined(_WIN64))
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -37,14 +37,16 @@
 #include <WS2tcpip.h>
 #endif
 
+
+
 class CAPRSWriter {
 public:
-	CAPRSWriter(const std::string& callsign, const std::string& suffix, const std::string& address, unsigned short port, bool debug);
+	CAPRSWriter(const std::string &callsign, const std::string &suffix, const std::string &address, unsigned short port, bool debug);
 	~CAPRSWriter();
 
 	bool open();
 
-	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string& desc);
+	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc);
 
 	void setLocation(float latitude, float longitude, int height);
 
@@ -53,20 +55,22 @@ public:
 	void close();
 
 private:
-	CTimer            m_idTimer;
-	std::string       m_callsign;
-	bool              m_debug;
-	unsigned int      m_txFrequency;
-	unsigned int      m_rxFrequency;
-	float             m_latitude;
-	float             m_longitude;
-	int               m_height;
-	std::string       m_desc;
-	sockaddr_storage  m_aprsAddr;
-	unsigned int      m_aprsLen;
-	CUDPSocket        m_aprsSocket;
+	CTimer m_idTimer;
+	std::string m_callsign;
+	bool m_debug;
+	unsigned int m_txFrequency;
+	unsigned int m_rxFrequency;
+	float m_latitude;
+	float m_longitude;
+	int m_height;
+	std::string m_desc;
+	sockaddr_storage m_aprsAddr;
+	unsigned int m_aprsLen;
+	CUDPSocket m_aprsSocket;
 
 	void sendIdFrame();
 };
 
-#endif
+
+
+#endif	/* !APRSWriter_H_ */
