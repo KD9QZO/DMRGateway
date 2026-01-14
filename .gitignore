@@ -1,17 +1,43 @@
-Debug
-Release
-x64
+#
+# .gitignore
+#
+
+## BACKUP & TEMPORARY FILES ##
+
+*~
+*.bak
+*.tmp
+*.swp
+
+
+## BUILD ARTIFACTS ##
+
+Debug/
+**/Debug/
+Release/
+**/Release/
+x64/
+**/x64/
+build/
+**/build/
+build-*/
+**/build-*/
 DMRGateway
 *.o
 *.opendb
-*.bak
 *.obj
-*~
 *.sdf
 *.log
 *.zip
 *.exe
+GitVersion.h
+
+
+## IDEs ##
+
+.vs/
+**/.vs/
+.vscode/
+**/.vscode/
 *.user
 *.VC.db
-.vs
-GitVersion.h
