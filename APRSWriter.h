@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2010,2011,2012,2016,2017,2018,2020,2023 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2010,2011,2012,2016,2017,2018,2020 by Jonathan Naylor G4KLX
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -19,11 +19,12 @@
 #ifndef	APRSWriter_H
 #define	APRSWriter_H
 
+#include "UDPSocket.h"
 #include "Timer.h"
 
 #include <string>
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if (!defined(_WIN32) && !defined(_WIN64))
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -36,14 +37,16 @@
 #include <WS2tcpip.h>
 #endif
 
+
+
 class CAPRSWriter {
 public:
-	CAPRSWriter(const std::string& callsign, const std::string& suffix, bool debug);
+	CAPRSWriter(const std::string &callsign, const std::string &suffix, const std::string &address, unsigned short port, bool debug);
 	~CAPRSWriter();
 
 	bool open();
 
-	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string& desc, const std::string& symbol);
+	void setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc, const std::string &symbol);
 
 	void setLocation(float latitude, float longitude, int height);
 
@@ -52,18 +55,23 @@ public:
 	void close();
 
 private:
-	CTimer       m_idTimer;
-	std::string  m_callsign;
-	bool         m_debug;
+	CTimer m_idTimer;
+	std::string m_callsign;
+	bool m_debug;
 	unsigned int m_txFrequency;
 	unsigned int m_rxFrequency;
-	float        m_latitude;
-	float        m_longitude;
-	int          m_height;
-	std::string  m_desc;
-	std::string  m_symbol;
+	float m_latitude;
+	float m_longitude;
+	int m_height;
+	std::string m_desc;
+	std::string m_symbol;
+	sockaddr_storage m_aprsAddr;
+	unsigned int m_aprsLen;
+	CUDPSocket m_aprsSocket;
 
 	void sendIdFrame();
 };
 
-#endif
+
+
+#endif	/* !APRSWriter_H_ */

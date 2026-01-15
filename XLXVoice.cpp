@@ -28,33 +28,36 @@
 
 #include <sys/stat.h>
 
-const unsigned char SILENCE[] = {0xACU, 0xAAU, 0x40U, 0x20U, 0x00U, 0x44U, 0x40U, 0x80U, 0x80U};
+
+
+const unsigned char SILENCE[] = {
+	0xACU, 0xAAU, 0x40U, 0x20U, 0x00U, 0x44U, 0x40U, 0x80U, 0x80U
+};
 
 const unsigned char COLOR_CODE = 3U;
 
 const unsigned int SILENCE_LENGTH = 9U;
 const unsigned int AMBE_LENGTH = 9U;
 
-CXLXVoice::CXLXVoice(const std::string& directory, const std::string& language, unsigned int id, unsigned int slot, unsigned int tg) :
-m_indxFile(),
-m_ambeFile(),
-m_slot(slot),
-m_lc(FLCO::GROUP, id, tg),
-m_embeddedLC(),
-m_status(XLXVOICE_STATUS::NONE),
-m_timer(1000U, 1U),
-m_stopWatch(),
-m_seqNo(0U),
-m_streamId(0U),
-m_sent(0U),
-m_ambe(nullptr),
-m_positions(),
-m_data(),
-m_it()
-{
+CXLXVoice::CXLXVoice(const std::string &directory, const std::string &language, unsigned int id, unsigned int slot, unsigned int tg):
+		m_indxFile(),
+		m_ambeFile(),
+		m_slot(slot),
+		m_lc(FLCO::GROUP, id, tg),
+		m_embeddedLC(),
+		m_status(XLXVOICE_STATUS::NONE),
+		m_timer(1000U, 1U),
+		m_stopWatch(),
+		m_seqNo(0U),
+		m_streamId(0U),
+		m_sent(0U),
+		m_ambe(nullptr),
+		m_positions(),
+		m_data(),
+		m_it() {
 	m_embeddedLC.setLC(m_lc);
 
-#if defined(_WIN32) || defined(_WIN64)
+#if (defined(_WIN32) || defined(_WIN64))
 	m_indxFile = directory + "\\" + language + ".indx";
 	m_ambeFile = directory + "\\" + language + ".ambe";
 #else
@@ -63,13 +66,14 @@ m_it()
 #endif
 }
 
-CXLXVoice::~CXLXVoice()
-{
-	for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it)
+CXLXVoice::~CXLXVoice() {
+	for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it) {
 		delete *it;
+	}
 
-	for (std::unordered_map<std::string, CXLXPositions*>::iterator it = m_positions.begin(); it != m_positions.end(); ++it)
+	for (std::unordered_map<std::string, CXLXPositions*>::iterator it = m_positions.begin(); it != m_positions.end(); ++it) {
 		delete it->second;
+	}
 
 	m_data.clear();
 	m_positions.clear();
@@ -77,9 +81,8 @@ CXLXVoice::~CXLXVoice()
 	delete[] m_ambe;
 }
 
-bool CXLXVoice::open()
-{
-	FILE* fpindx = ::fopen(m_indxFile.c_str(), "rt");
+bool CXLXVoice::open() {
+	FILE *fpindx = ::fopen(m_indxFile.c_str(), "rt");
 	if (fpindx == nullptr) {
 		LogError("Unable to open the index file - %s", m_indxFile.c_str());
 		return false;
@@ -93,7 +96,7 @@ bool CXLXVoice::open()
 		return false;
 	}
 
-	FILE* fpambe = ::fopen(m_ambeFile.c_str(), "rb");
+	FILE *fpambe = ::fopen(m_ambeFile.c_str(), "rb");
 	if (fpambe == nullptr) {
 		LogError("Unable to open the AMBE file - %s", m_ambeFile.c_str());
 		::fclose(fpindx);
@@ -106,16 +109,16 @@ bool CXLXVoice::open()
 	if (sizeRead != 0U) {
 		char buffer[80U];
 		while (::fgets(buffer, 80, fpindx) != nullptr) {
-			char* p1 = ::strtok(buffer, "\t\r\n");
-			char* p2 = ::strtok(nullptr, "\t\r\n");
-			char* p3 = ::strtok(nullptr, "\t\r\n");
+			char *p1 = ::strtok(buffer, "\t\r\n");
+			char *p2 = ::strtok(nullptr, "\t\r\n");
+			char *p3 = ::strtok(nullptr, "\t\r\n");
 
 			if (p1 != nullptr && p2 != nullptr && p3 != nullptr) {
-				std::string symbol  = std::string(p1);
-				unsigned int start  = ::atoi(p2) * AMBE_LENGTH;
+				std::string symbol = std::string(p1);
+				unsigned int start = ::atoi(p2) * AMBE_LENGTH;
 				unsigned int length = ::atoi(p3) * AMBE_LENGTH;
 
-				CXLXPositions* pos = new CXLXPositions;
+				CXLXPositions *pos = new CXLXPositions;
 				pos->m_start = start;
 				pos->m_length = length;
 
@@ -130,9 +133,9 @@ bool CXLXVoice::open()
 	return true;
 }
 
-void CXLXVoice::linkedTo(const std::string &number, unsigned int room)
-{
+void CXLXVoice::linkedTo(const std::string &number, unsigned int room) {
 	std::vector<std::string> words;
+
 	if (m_positions.count("linkedto") == 0U) {
 		words.push_back("linked");
 		words.push_back("2");
@@ -149,23 +152,23 @@ void CXLXVoice::linkedTo(const std::string &number, unsigned int room)
 	// 4001 => 1 => A, 4002 => 2 => B, etc.
 	room %= 100U;
 
-	if (room >= 1U && room <= 26U)
+	if ((room >= 1U) && (room <= 26U)) {
 		words.push_back(std::string(1U, 'A' + room - 1U));
+	}
 
 	createVoice(words);
 }
 
-void CXLXVoice::unlinked()
-{
+void CXLXVoice::unlinked() {
 	std::vector<std::string> words;
 	words.push_back("notlinked");
 
 	createVoice(words);
 }
 
-void CXLXVoice::createVoice(const std::vector<std::string>& words)
-{
+void CXLXVoice::createVoice(const std::vector<std::string> &words) {
 	unsigned int ambeLength = 0U;
+
 	for (std::vector<std::string>::const_iterator it = words.begin(); it != words.end(); ++it) {
 		if (m_positions.count(*it) > 0U) {
 			CXLXPositions* position = m_positions.at(*it);
@@ -186,26 +189,28 @@ void CXLXVoice::createVoice(const std::vector<std::string>& words)
 	ambeLength += SILENCE_LENGTH * AMBE_LENGTH;
 	ambeLength += SILENCE_LENGTH * AMBE_LENGTH;
 
-	unsigned char* ambeData = new unsigned char[ambeLength];
+	unsigned char *ambeData = new unsigned char[ambeLength];
 
 	// Fill the AMBE data with silence
-	for (unsigned int i = 0U; i < ambeLength; i += AMBE_LENGTH)
+	for (unsigned int i = 0U; i < ambeLength; i += AMBE_LENGTH) {
 		::memcpy(ambeData + i, SILENCE, AMBE_LENGTH);
+	}
 
 	// Put offset in for silence at the beginning
 	unsigned int pos = SILENCE_LENGTH * AMBE_LENGTH;
 	for (std::vector<std::string>::const_iterator it = words.begin(); it != words.end(); ++it) {
 		if (m_positions.count(*it) > 0U) {
-			CXLXPositions* position = m_positions.at(*it);
+			CXLXPositions *position = m_positions.at(*it);
 			unsigned int start = position->m_start;
 			unsigned int length = position->m_length;
 			::memcpy(ambeData + pos, m_ambe + start, length);
 			pos += length;
 		}
 	}
-		
-	for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it)
+
+	for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it) {
 		delete *it;
+	}
 
 	m_data.clear();
 
@@ -220,9 +225,8 @@ void CXLXVoice::createVoice(const std::vector<std::string>& words)
 
 	unsigned int n = 0U;
 	for (unsigned int i = 0U; i < ambeLength; i += (3U * AMBE_LENGTH)) {
-		unsigned char* p = ambeData + i;
-
-		CDMRData* data = new CDMRData;
+		unsigned char *p = ambeData + i;
+		CDMRData *data = new CDMRData;
 
 		data->setSlotNo(m_slot);
 		data->setFLCO(FLCO::GROUP);
@@ -242,8 +246,8 @@ void CXLXVoice::createVoice(const std::vector<std::string>& words)
 			data->setDataType(DT_VOICE_SYNC);
 		} else {
 			unsigned char lcss = m_embeddedLC.getData(buffer, n);
-
 			CDMREMB emb;
+
 			emb.setColorCode(COLOR_CODE);
 			emb.setPI(false);
 			emb.setLCSS(lcss);
@@ -253,8 +257,9 @@ void CXLXVoice::createVoice(const std::vector<std::string>& words)
 		}
 
 		n++;
-		if (n >= 6U)
+		if (n >= 6U) {
 			n = 0U;
+		}
 
 		data->setData(buffer);
 
@@ -270,8 +275,7 @@ void CXLXVoice::createVoice(const std::vector<std::string>& words)
 	m_timer.start();
 }
 
-void CXLXVoice::reset()
-{
+void CXLXVoice::reset() {
 	for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it)
 		delete *it;
 
@@ -283,10 +287,10 @@ void CXLXVoice::reset()
 	m_sent = 0U;
 }
 
-bool CXLXVoice::read(CDMRData& data)
-{
-	if (m_status != XLXVOICE_STATUS::SENDING)
+bool CXLXVoice::read(CDMRData &data) {
+	if (m_status != XLXVOICE_STATUS::SENDING) {
 		return false;
+	}
 
 	unsigned int count = m_stopWatch.elapsed() / DMR_SLOT_TIME;
 
@@ -297,8 +301,9 @@ bool CXLXVoice::read(CDMRData& data)
 		++m_it;
 
 		if (m_it == m_data.end()) {
-			for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it)
+			for (std::vector<CDMRData*>::iterator it = m_data.begin(); it != m_data.end(); ++it) {
 				delete *it;
+			}
 			m_data.clear();
 			m_timer.stop();
 			m_status = XLXVOICE_STATUS::NONE;
@@ -310,9 +315,9 @@ bool CXLXVoice::read(CDMRData& data)
 	return false;
 }
 
-void CXLXVoice::clock(unsigned int ms)
-{
+void CXLXVoice::clock(unsigned int ms) {
 	m_timer.clock(ms);
+
 	if (m_timer.isRunning() && m_timer.hasExpired()) {
 		if (m_status == XLXVOICE_STATUS::WAITING) {
 			m_stopWatch.start();
@@ -323,9 +328,8 @@ void CXLXVoice::clock(unsigned int ms)
 	}
 }
 
-void CXLXVoice::createHeaderTerminator(unsigned char type)
-{
-	CDMRData* data = new CDMRData;
+void CXLXVoice::createHeaderTerminator(unsigned char type) {
+	CDMRData *data = new CDMRData;
 
 	data->setSlotNo(m_slot);
 	data->setFLCO(FLCO::GROUP);

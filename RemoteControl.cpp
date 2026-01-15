@@ -32,21 +32,18 @@ const unsigned int DISABLE_ARGS = 2U;
 const unsigned int BUFFER_LENGTH = 100U;
 
 // In Log.cpp
-extern CMQTTConnection* m_mqtt;
+extern CMQTTConnection *m_mqtt;
 
-CRemoteControl::CRemoteControl(CDMRGateway* host) :
-m_host(host),
-m_command(REMOTE_COMMAND::NONE),
-m_args()
-{
+CRemoteControl::CRemoteControl(CDMRGateway *host):
+		m_host(host),
+		m_command(REMOTE_COMMAND::NONE),
+		m_args() {
 }
 
-CRemoteControl::~CRemoteControl()
-{
+CRemoteControl::~CRemoteControl() {
 }
 
-REMOTE_COMMAND CRemoteControl::processCommand(const std::string& command)
-{
+REMOTE_COMMAND CRemoteControl::processCommand(const std::string &command) {
 	m_command = REMOTE_COMMAND::NONE;
 	m_args.clear();
 
@@ -127,34 +124,31 @@ REMOTE_COMMAND CRemoteControl::processCommand(const std::string& command)
 	return m_command;
 }
 
-unsigned int CRemoteControl::getArgCount() const
-{
+unsigned int CRemoteControl::getArgCount() const {
 	switch (m_command) {
 		default:
 			return 0U;
 	}
 }
 
-std::string CRemoteControl::getArgString(unsigned int n) const
-{
+std::string CRemoteControl::getArgString(unsigned int n) const {
 	switch (m_command) {
 		default:
 			return "";
 	}
 
-	if (n >= m_args.size())
+	if (n >= m_args.size()) {
 		return "";
+	}
 
 	return m_args.at(n);
 }
 
-unsigned int CRemoteControl::getArgUInt(unsigned int n) const
-{
+unsigned int CRemoteControl::getArgUInt(unsigned int n) const {
 	return (unsigned int)::atoi(getArgString(n).c_str());
 }
 
-int CRemoteControl::getArgInt(unsigned int n) const
-{
+int CRemoteControl::getArgInt(unsigned int n) const {
 	return ::atoi(getArgString(n).c_str());
 }
 

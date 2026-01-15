@@ -23,19 +23,18 @@
 #include <cstdio>
 #include <cassert>
 
-CDMREMB::CDMREMB() :
-m_colorCode(0U),
-m_PI(false),
-m_LCSS(0U)
-{
+
+
+CDMREMB::CDMREMB():
+		m_colorCode(0U),
+		m_PI(false),
+		m_LCSS(0U) {
 }
 
-CDMREMB::~CDMREMB()
-{
+CDMREMB::~CDMREMB() {
 }
 
-void CDMREMB::putData(const unsigned char* data)
-{
+void CDMREMB::putData(const unsigned char *data) {
 	assert(data != nullptr);
 
 	unsigned char DMREMB[2U];
@@ -51,8 +50,7 @@ void CDMREMB::putData(const unsigned char* data)
 	m_LCSS      = (DMREMB[0U] >> 1) & 0x03U;
 }
 
-void CDMREMB::getData(unsigned char* data) const
-{
+void CDMREMB::getData(unsigned char *data) const {
 	assert(data != nullptr);
 
 	unsigned char DMREMB[2U];
@@ -69,32 +67,26 @@ void CDMREMB::getData(unsigned char* data) const
 	data[19U] = (data[19U] & 0x0FU) | ((DMREMB[1U] << 4U) & 0xF0U);
 }
 
-unsigned char CDMREMB::getColorCode() const
-{
+unsigned char CDMREMB::getColorCode() const {
 	return m_colorCode;
 }
 
-void CDMREMB::setColorCode(unsigned char code)
-{
+void CDMREMB::setColorCode(unsigned char code) {
 	m_colorCode = code;
 }
 
-bool CDMREMB::getPI() const
-{
+bool CDMREMB::getPI() const {
 	return m_PI;
 }
 
-void CDMREMB::setPI(bool pi)
-{
+void CDMREMB::setPI(bool pi) {
 	m_PI = pi;
 }
 
-unsigned char CDMREMB::getLCSS() const
-{
+unsigned char CDMREMB::getLCSS() const {
 	return m_LCSS;
 }
 
-void CDMREMB::setLCSS(unsigned char lcss)
-{
+void CDMREMB::setLCSS(unsigned char lcss) {
 	m_LCSS = lcss;
 }

@@ -27,20 +27,19 @@
 #include <cmath>
 
 // In Log.cpp
-extern CMQTTConnection* m_mqtt;
+extern CMQTTConnection *m_mqtt;
 
-CAPRSWriter::CAPRSWriter(const std::string& callsign, const std::string& suffix, bool debug) :
-m_idTimer(1000U),
-m_callsign(callsign),
-m_debug(debug),
-m_txFrequency(0U),
-m_rxFrequency(0U),
-m_latitude(0.0F),
-m_longitude(0.0F),
-m_height(0),
-m_desc(),
-m_symbol()
-{
+CAPRSWriter::CAPRSWriter(const std::string &callsign, const std::string &suffix, bool debug):
+		m_idTimer(1000U),
+		m_callsign(callsign),
+		m_debug(debug),
+		m_txFrequency(0U),
+		m_rxFrequency(0U),
+		m_latitude(0.0F),
+		m_longitude(0.0F),
+		m_height(0),
+		m_desc(),
+		m_symbol() {
 	assert(!callsign.empty());
 
 	if (!suffix.empty()) {
@@ -49,36 +48,30 @@ m_symbol()
 	}
 }
 
-CAPRSWriter::~CAPRSWriter()
-{
+CAPRSWriter::~CAPRSWriter() {
 }
 
-void CAPRSWriter::setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string& desc, const std::string& symbol)
-
-{
+void CAPRSWriter::setInfo(unsigned int txFrequency, unsigned int rxFrequency, const std::string &desc, const std::string &symbol) {
 	m_txFrequency = txFrequency;
 	m_rxFrequency = rxFrequency;
-	m_desc        = desc;
-	m_symbol      = symbol;
+	m_desc = desc;
+	m_symbol = symbol;
 }
 
-void CAPRSWriter::setLocation(float latitude, float longitude, int height)
-{
-	m_latitude  = latitude;
+void CAPRSWriter::setLocation(float latitude, float longitude, int height) {
+	m_latitude = latitude;
 	m_longitude = longitude;
-	m_height    = height;
+	m_height = height;
 }
 
-bool CAPRSWriter::open()
-{
+bool CAPRSWriter::open() {
 	m_idTimer.setTimeout(60U);
 	m_idTimer.start();
 
 	return true;
 }
 
-void CAPRSWriter::clock(unsigned int ms)
-{
+void CAPRSWriter::clock(unsigned int ms) {
 	m_idTimer.clock(ms);
 	if (m_idTimer.hasExpired()) {
 		sendIdFrame();
@@ -87,15 +80,14 @@ void CAPRSWriter::clock(unsigned int ms)
 	}
 }
 
-void CAPRSWriter::close()
-{
+void CAPRSWriter::close() {
 }
 
-void CAPRSWriter::sendIdFrame()
-{
+void CAPRSWriter::sendIdFrame() {
 	// Default values aren't passed on
-	if (m_latitude == 0.0F && m_longitude == 0.0F)
+	if ((m_latitude == 0.0F) && (m_longitude == 0.0F)) {
 		return;
+	}
 
 	char desc[200U];
 	if (m_txFrequency != 0U) {
@@ -108,25 +100,36 @@ void CAPRSWriter::sendIdFrame()
 		::sprintf(desc, "MMDVM Voice (DMR)%s%s", m_desc.empty() ? "" : ", ", m_desc.c_str());
 	}
 
-	const char* band = "4m";
-	if (m_txFrequency >= 1200000000U)
+	const char *band = "4m";
+	if (m_txFrequency >= 1200000000U) {
 		band = "23cm/1.2GHz";
-	else if (m_txFrequency >= 420000000U)
+	} else if (m_txFrequency >= 902000000U) {
+		band = "33cm";
+	} else if (m_txFrequency >= 420000000U) {
 		band = "70cm";
-	else if (m_txFrequency >= 144000000U)
+	} else if (m_txFrequency >= 219000000U) {
+		band = "1.25m/220MHz";
+	} else if (m_txFrequency >= 144000000U) {
 		band = "2m";
-	else if (m_txFrequency >= 50000000U)
+	} else if (m_txFrequency >= 50000000U) {
 		band = "6m";
-	else if (m_txFrequency >= 28000000U)
+	} else if (m_txFrequency >= 28000000U) {
 		band = "10m";
+	} else if (m_txFrequency >= 21000000U) {
+		band = "15m";
+	} else if (m_txFrequency >= 14000000U) {
+		band = "20m";
+	} else if (m_txFrequency >= 10100000U) {
+		band = "30m";
+	}
 
-	double tempLat  = ::fabs(m_latitude);
+	double tempLat = ::fabs(m_latitude);
 	double tempLong = ::fabs(m_longitude);
 
-	double latitude  = ::floor(tempLat);
+	double latitude = ::floor(tempLat);
 	double longitude = ::floor(tempLong);
 
-	latitude  = (tempLat  - latitude)  * 60.0 + latitude  * 100.0;
+	latitude = (tempLat - latitude) * 60.0 + latitude * 100.0;
 	longitude = (tempLong - longitude) * 60.0 + longitude * 100.0;
 
 	char lat[20U];
@@ -138,10 +141,11 @@ void CAPRSWriter::sendIdFrame()
 	std::string server = m_callsign;
 	std::string symbol = m_symbol;
 	size_t pos = server.find_first_of('-');
-	if (pos == std::string::npos)
+	if (pos == std::string::npos) {
 		server.append("-S");
-	else
+	} else {
 		server.append("S");
+	}
 
         if (symbol.empty())
                 symbol.append("D&");
@@ -153,8 +157,9 @@ void CAPRSWriter::sendIdFrame()
 		lon, (m_longitude < 0.0F) ? 'W' : 'E', symbol[1],
 		float(m_height) * 3.28F, band, desc);
 
-	if (m_debug)
+	if (m_debug) {
 		LogDebug("APRS ==> %s", output);
+	}
 
 	m_mqtt->publish("aprs-gateway/aprs", output);
 }

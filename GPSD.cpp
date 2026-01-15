@@ -25,39 +25,35 @@
 #include <cstring>
 #include <cmath>
 
-CGPSD::CGPSD(const std::string& address, const std::string& port) :
-m_gpsdAddress(address),
-m_gpsdPort(port),
-m_gpsdData(),
-m_idTimer(1000U, 60U),
-m_networks(),
-m_aprs(nullptr)
-{
+CGPSD::CGPSD(const std::string &address, const std::string &port):
+		m_gpsdAddress(address),
+		m_gpsdPort(port),
+		m_gpsdData(),
+		m_idTimer(1000U, 60U),
+		m_networks(),
+		m_aprs(nullptr) {
 	assert(!address.empty());
 	assert(!port.empty());
 }
 
-CGPSD::~CGPSD()
-{
+CGPSD::~CGPSD() {
 }
 
-void CGPSD::addNetwork(CDMRNetwork* network)
-{
+void CGPSD::addNetwork(CDMRNetwork *network) {
 	assert(network != nullptr);
 
 	m_networks.push_back(network);
 }
 
-void CGPSD::setAPRS(CAPRSWriter* aprs)
-{
+void CGPSD::setAPRS(CAPRSWriter *aprs) {
 	assert(aprs != nullptr);
 
 	m_aprs = aprs;
 }
 
-bool CGPSD::open()
-{
+bool CGPSD::open() {
 	int ret = ::gps_open(m_gpsdAddress.c_str(), m_gpsdPort.c_str(), &m_gpsdData);
+
 	if (ret != 0) {
 		LogError("Error when opening access to gpsd - %d - %s", errno, ::gps_errstr(errno));
 		return false;
@@ -72,8 +68,7 @@ bool CGPSD::open()
 	return true;
 }
 
-void CGPSD::clock(unsigned int ms)
-{
+void CGPSD::clock(unsigned int ms) {
 	m_idTimer.clock(ms);
 
 	if (m_idTimer.hasExpired()) {
@@ -82,51 +77,57 @@ void CGPSD::clock(unsigned int ms)
 	}
 }
 
-void CGPSD::close()
-{
+void CGPSD::close() {
 	::gps_stream(&m_gpsdData, WATCH_DISABLE, nullptr);
 	::gps_close(&m_gpsdData);
 }
 
-void CGPSD::sendReport()
-{
-	if (!::gps_waiting(&m_gpsdData, 0))
+void CGPSD::sendReport() {
+	if (!::gps_waiting(&m_gpsdData, 0)) {
 		return;
+	}
 
-#if GPSD_API_MAJOR_VERSION >= 7
-	if (::gps_read(&m_gpsdData, nullptr, 0) <= 0)
+#if (GPSD_API_MAJOR_VERSION >= 7)
+	if (::gps_read(&m_gpsdData, nullptr, 0) <= 0) {
 		return;
+	}
 #else
-	if (::gps_read(&m_gpsdData) <= 0)
+	if (::gps_read(&m_gpsdData) <= 0) {
 		return;
+	}
 #endif
 
 #if GPSD_API_MAJOR_VERSION >= 10
-	if (m_gpsdData.fix.status != STATUS_FIX)
+	if (m_gpsdData.fix.status != STATUS_FIX) {
 #else
-	if (m_gpsdData.status != STATUS_FIX)
+	if (m_gpsdData.status != STATUS_FIX) {
 #endif
 		return;
+	}
 
 	bool latlonSet = (m_gpsdData.set & LATLON_SET) == LATLON_SET;
-	if (!latlonSet)
+	if (!latlonSet) {
 		return;
+	}
 
 	bool altitudeSet = (m_gpsdData.set & ALTITUDE_SET) == ALTITUDE_SET;
 
 	float latitude  = float(m_gpsdData.fix.latitude);
 	float longitude = float(m_gpsdData.fix.longitude);
-#if GPSD_API_MAJOR_VERSION >= 9
+#if (GPSD_API_MAJOR_VERSION >= 9)
 	float altitude  = float(m_gpsdData.fix.altMSL);
 #else
 	float altitude  = float(m_gpsdData.fix.altitude);
 #endif
 
-	if (m_aprs != nullptr)
+	if (m_aprs != nullptr) {
 		m_aprs->setLocation(latitude, longitude, altitudeSet ? altitude : 0.0F);
+	}
 
-	for (std::vector<CDMRNetwork*>::const_iterator it = m_networks.begin(); it != m_networks.end(); ++it)
+	for (std::vector<CDMRNetwork*>::const_iterator it = m_networks.begin(); it != m_networks.end(); ++it) {
 		(*it)->writeHomePosition(latitude, longitude);
+	}
 }
 
-#endif
+
+#endif	/* defined(USE_GPSD) */

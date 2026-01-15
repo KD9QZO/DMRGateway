@@ -24,20 +24,17 @@
 #include <cstdio>
 #include <cassert>
 
-CDMRCSBK::CDMRCSBK() :
-m_data(nullptr),
-m_CSBKO(CSBKO::NONE)
-{
+CDMRCSBK::CDMRCSBK():
+		m_data(nullptr),
+		m_CSBKO(CSBKO::NONE) {
 	m_data = new unsigned char[12U];
 }
 
-CDMRCSBK::~CDMRCSBK()
-{
+CDMRCSBK::~CDMRCSBK() {
 	delete[] m_data;
 }
 
-bool CDMRCSBK::put(const unsigned char* bytes)
-{
+bool CDMRCSBK::put(const unsigned char *bytes) {
 	assert(bytes != nullptr);
 
 	CBPTC19696 bptc;
@@ -55,12 +52,11 @@ bool CDMRCSBK::put(const unsigned char* bytes)
 	return true;
 }
 
-void CDMRCSBK::get(unsigned char* bytes) const
-{
+void CDMRCSBK::get(unsigned char *bytes) const {
 	assert(bytes != nullptr);
 
 	CCRC::addCCITT162(m_data, 12U);
-	
+
 	m_data[10U] ^= CSBK_CRC_MASK[0U];
 	m_data[11U] ^= CSBK_CRC_MASK[1U];
 
@@ -68,67 +64,62 @@ void CDMRCSBK::get(unsigned char* bytes) const
 	bptc.encode(m_data, bytes);
 }
 
-CSBKO CDMRCSBK::getCSBKO() const
-{
+CSBKO CDMRCSBK::getCSBKO() const {
 	return m_CSBKO;
 }
 
-bool CDMRCSBK::getGI() const
-{
-	if (m_CSBKO == CSBKO::PRECCSBK)
-		return (m_data[2U] & 0x40U) == 0x40U;
-	else
-		return false;
-}
-
-unsigned int CDMRCSBK::getSrcId() const
-{
-	if (m_CSBKO == CSBKO::NACKRSP)
-		return m_data[4U] << 16 | m_data[5U] << 8 | m_data[6U];		
-	else
-		return m_data[7U] << 16 | m_data[8U] << 8 | m_data[9U];
-}
-
-unsigned int CDMRCSBK::getDstId() const
-{
-	if (m_CSBKO == CSBKO::NACKRSP)
-		return m_data[7U] << 16 | m_data[8U] << 8 | m_data[9U];
-	else
-		return m_data[4U] << 16 | m_data[5U] << 8 | m_data[6U];		
-}
-
-void CDMRCSBK::setGI(bool group)
-{
+bool CDMRCSBK::getGI() const {
 	if (m_CSBKO == CSBKO::PRECCSBK) {
-		if (group)
+		return (m_data[2U] & 0x40U) == 0x40U;
+	} else {
+		return false;
+	}
+}
+
+unsigned int CDMRCSBK::getSrcId() const {
+	if (m_CSBKO == CSBKO::NACKRSP)
+		return ((m_data[4U] << 16) | (m_data[5U] << 8) | m_data[6U]);
+	else
+		return ((m_data[7U] << 16) | (m_data[8U] << 8) | m_data[9U]);
+}
+
+unsigned int CDMRCSBK::getDstId() const {
+	if (m_CSBKO == CSBKO::NACKRSP)
+		return ((m_data[7U] << 16) | (m_data[8U] << 8) | m_data[9U]);
+	else
+		return ((m_data[4U] << 16) | (m_data[5U] << 8) | m_data[6U]);
+}
+
+void CDMRCSBK::setGI(bool group) {
+	if (m_CSBKO == CSBKO::PRECCSBK) {
+		if (group) {
 			m_data[2U] |= 0x40U;
-		else
-			m_data[2U] &= ~0x40U;
+		} else {
+			m_data[2U] &= ~(0x40U);
+		}
 	}
 }
 
-void CDMRCSBK::setSrcId(unsigned int id)
-{
+void CDMRCSBK::setSrcId(unsigned int id) {
 	if (m_CSBKO == CSBKO::NACKRSP) {
-		m_data[4U] = id >> 16;
-		m_data[5U] = id >> 8;
-		m_data[6U] = id >> 0;
+		m_data[4U] = (id >> 16);
+		m_data[5U] = (id >> 8);
+		m_data[6U] = (id >> 0);
 	} else {
-		m_data[7U] = id >> 16;
-		m_data[8U] = id >> 8;
-		m_data[9U] = id >> 0;
+		m_data[7U] = (id >> 16);
+		m_data[8U] = (id >> 8);
+		m_data[9U] = (id >> 0);
 	}
 }
 
-void CDMRCSBK::setDstId(unsigned int id)
-{
+void CDMRCSBK::setDstId(unsigned int id) {
 	if (m_CSBKO == CSBKO::NACKRSP) {
-		m_data[7U] = id >> 16;
-		m_data[8U] = id >> 8;
-		m_data[9U] = id >> 0;
+		m_data[7U] = (id >> 16);
+		m_data[8U] = (id >> 8);
+		m_data[9U] = (id >> 0);
 	} else {
-		m_data[4U] = id >> 16;
-		m_data[5U] = id >> 8;
-		m_data[6U] = id >> 0;
+		m_data[4U] = (id >> 16);
+		m_data[5U] = (id >> 8);
+		m_data[6U] = (id >> 0);
 	}
 }

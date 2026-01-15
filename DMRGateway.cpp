@@ -70,18 +70,17 @@ static void sigHandler(int signum)
 #endif
 
 // In Log.cpp
-extern CMQTTConnection* m_mqtt;
+extern CMQTTConnection *m_mqtt;
 
-static CDMRGateway* gateway = nullptr;
+static CDMRGateway *gateway = nullptr;
 
-const char* HEADER1 = "This software is for use on amateur radio networks only,";
-const char* HEADER2 = "it is to be used for educational purposes only. Its use on";
-const char* HEADER3 = "commercial networks is strictly prohibited.";
-const char* HEADER4 = "Copyright(C) 2017-2025 by Jonathan Naylor, G4KLX and others";
+const char *HEADER1 = "This software is for use on amateur radio networks only,";
+const char *HEADER2 = "it is to be used for educational purposes only. Its use on";
+const char *HEADER3 = "commercial networks is strictly prohibited.";
+const char *HEADER4 = "Copyright(C) 2017-2025 by Jonathan Naylor, G4KLX and others";
 
-int main(int argc, char** argv)
-{
-	const char* iniFile = DEFAULT_INI_FILE;
+int main(int argc, char *argv[]) {
+	const char *iniFile = DEFAULT_INI_FILE;
 
 	if (argc > 1) {
 		for (int currentArg = 1; currentArg < argc; ++currentArg) {
@@ -118,15 +117,19 @@ int main(int argc, char** argv)
 		switch (m_signal) {
 			case 0:
 				break;
+
 			case 2:
 				::LogInfo("DMRGateway-%s exited on receipt of SIGINT", VERSION);
 				break;
+
 			case 15:
 				::LogInfo("DMRGateway-%s exited on receipt of SIGTERM", VERSION);
 				break;
+
 			case 1:
 				::LogInfo("DMRGateway-%s is restarting on receipt of SIGHUP", VERSION);
 				break;
+
 			default:
 				::LogInfo("DMRGateway-%s exited on receipt of an unknown signal", VERSION);
 				break;
@@ -138,80 +141,79 @@ int main(int argc, char** argv)
 	return ret;
 }
 
-CDMRGateway::CDMRGateway(const std::string& confFile) :
-m_conf(confFile),
-m_status(nullptr),
-m_repeater(nullptr),
-m_config(nullptr),
-m_configLen(0U),
-m_dmrNetwork1(nullptr),
-m_dmr1Name(),
-m_dmrNetwork2(nullptr),
-m_dmr2Name(),
-m_dmrNetwork3(nullptr),
-m_dmr3Name(),
-m_dmrNetwork4(nullptr),
-m_dmr4Name(),
-m_dmrNetwork5(nullptr),
-m_dmr5Name(),
-m_xlxReflectors(nullptr),
-m_xlxNetwork(nullptr),
-m_xlxId(0U),
-m_xlxNumber("000"),
-m_xlxReflector(4000U),
-m_xlxSlot(0U),
-m_xlxTG(0U),
-m_xlxBase(0U),
-m_xlxLocal(0U),
-m_xlxPort(62030U),
-m_xlxPassword("passw0rd"),
-m_xlxStartup("950"),
-m_xlxRoom(4000U),
-m_xlxRelink(1000U),
-m_xlxConnected(false),
-m_xlxDebug(false),
-m_xlxUserControl(true),
-m_xlxModule(),
-m_rptRewrite(nullptr),
-m_xlxRewrite(nullptr),
-m_xlxVoice(nullptr),
-m_dmr1NetRewrites(),
-m_dmr1RFRewrites(),
-m_dmr1SrcRewrites(),
-m_dmr2NetRewrites(),
-m_dmr2RFRewrites(),
-m_dmr2SrcRewrites(),
-m_dmr3NetRewrites(),
-m_dmr3RFRewrites(),
-m_dmr3SrcRewrites(),
-m_dmr4NetRewrites(),
-m_dmr4RFRewrites(),
-m_dmr4SrcRewrites(),
-m_dmr5NetRewrites(),
-m_dmr5RFRewrites(),
-m_dmr5SrcRewrites(),
-m_dmr1Passalls(),
-m_dmr2Passalls(),
-m_dmr3Passalls(),
-m_dmr4Passalls(),
-m_dmr5Passalls(),
-m_dynVoices(),
-m_dynRF(),
-m_writer(nullptr),
-m_callsign(),
-m_txFrequency(0U),
-m_rxFrequency(0U),
+CDMRGateway::CDMRGateway(const std::string &confFile):
+		m_conf(confFile),
+		m_status(nullptr),
+		m_repeater(nullptr),
+		m_config(nullptr),
+		m_configLen(0U),
+		m_dmrNetwork1(nullptr),
+		m_dmr1Name(),
+		m_dmrNetwork2(nullptr),
+		m_dmr2Name(),
+		m_dmrNetwork3(nullptr),
+		m_dmr3Name(),
+		m_dmrNetwork4(nullptr),
+		m_dmr4Name(),
+		m_dmrNetwork5(nullptr),
+		m_dmr5Name(),
+		m_xlxReflectors(nullptr),
+		m_xlxNetwork(nullptr),
+		m_xlxId(0U),
+		m_xlxNumber("000"),
+		m_xlxReflector(4000U),
+		m_xlxSlot(0U),
+		m_xlxTG(0U),
+		m_xlxBase(0U),
+		m_xlxLocal(0U),
+		m_xlxPort(62030U),
+		m_xlxPassword("passw0rd"),
+		m_xlxStartup("950"),
+		m_xlxRoom(4000U),
+		m_xlxRelink(1000U),
+		m_xlxConnected(false),
+		m_xlxDebug(false),
+		m_xlxUserControl(true),
+		m_xlxModule(),
+		m_rptRewrite(nullptr),
+		m_xlxRewrite(nullptr),
+		m_xlxVoice(nullptr),
+		m_dmr1NetRewrites(),
+		m_dmr1RFRewrites(),
+		m_dmr1SrcRewrites(),
+		m_dmr2NetRewrites(),
+		m_dmr2RFRewrites(),
+		m_dmr2SrcRewrites(),
+		m_dmr3NetRewrites(),
+		m_dmr3RFRewrites(),
+		m_dmr3SrcRewrites(),
+		m_dmr4NetRewrites(),
+		m_dmr4RFRewrites(),
+		m_dmr4SrcRewrites(),
+		m_dmr5NetRewrites(),
+		m_dmr5RFRewrites(),
+		m_dmr5SrcRewrites(),
+		m_dmr1Passalls(),
+		m_dmr2Passalls(),
+		m_dmr3Passalls(),
+		m_dmr4Passalls(),
+		m_dmr5Passalls(),
+		m_dynVoices(),
+		m_dynRF(),
+		m_writer(nullptr),
+		m_callsign(),
+		m_txFrequency(0U),
+		m_rxFrequency(0U),
 #if defined(USE_GPSD)
-m_gpsd(nullptr),
+		m_gpsd(nullptr),
 #endif
-m_network1Enabled(false),
-m_network2Enabled(false),
-m_network3Enabled(false),
-m_network4Enabled(false),
-m_network5Enabled(false),
-m_networkXlxEnabled(false),
-m_remoteControl(nullptr)
-{
+		m_network1Enabled(false),
+		m_network2Enabled(false),
+		m_network3Enabled(false),
+		m_network4Enabled(false),
+		m_network5Enabled(false),
+		m_networkXlxEnabled(false),
+		m_remoteControl(nullptr) {
 	CUDPSocket::startup();
 
 	m_status = new DMRGW_STATUS[3U];
@@ -295,8 +297,7 @@ CDMRGateway::~CDMRGateway()
 	CUDPSocket::shutdown();
 }
 
-int CDMRGateway::run()
-{
+int CDMRGateway::run() {
 	bool ret = m_conf.read();
 	if (!ret) {
 		::fprintf(stderr, "DMRGateway: cannot read the .ini file\n");
@@ -1335,13 +1336,12 @@ int CDMRGateway::run()
 	return 0;
 }
 
-bool CDMRGateway::createMMDVM()
-{
-	std::string rptAddress   = m_conf.getRptAddress();
-	unsigned short rptPort   = m_conf.getRptPort();
+bool CDMRGateway::createMMDVM() {
+	std::string rptAddress = m_conf.getRptAddress();
+	unsigned short rptPort = m_conf.getRptPort();
 	std::string localAddress = m_conf.getLocalAddress();
 	unsigned short localPort = m_conf.getLocalPort();
-	bool debug               = m_conf.getDebug();
+	bool debug = m_conf.getDebug();
 
 	LogInfo("MMDVM Network Parameters");
 	LogInfo("    Rpt Address: %s", rptAddress.c_str());
@@ -2491,24 +2491,23 @@ void CDMRGateway::processTalkerAlias()
 		m_dmrNetwork5->writeTalkerAlias(buffer, length);
 }
 
-void CDMRGateway::createAPRS()
-{
+void CDMRGateway::createAPRS() {
 	if (!m_conf.getAPRSEnabled())
 		return;
 
 	std::string suffix = m_conf.getAPRSSuffix();
-	bool debug         = m_conf.getDebug();
+	bool debug = m_conf.getDebug();
 
 	m_writer = new CAPRSWriter(m_callsign, suffix, debug);
 
-	std::string desc   = m_conf.getAPRSDescription();
+	std::string desc = m_conf.getAPRSDescription();
 	std::string symbol = m_conf.getAPRSSymbol();
 
 	m_writer->setInfo(m_txFrequency, m_rxFrequency, desc, symbol);
 
-	float latitude  = m_conf.getInfoLatitude();
+	float latitude = m_conf.getInfoLatitude();
 	float longitude = m_conf.getInfoLongitude();
-	int height      = m_conf.getInfoHeight();
+	int height = m_conf.getInfoHeight();
 
 	m_writer->setLocation(latitude, longitude, height);
 
@@ -2555,9 +2554,9 @@ void CDMRGateway::processDynamicTGControl(const std::string& command)
 	}
 }
 
-void CDMRGateway::remoteControl(const std::string& commandStr)
-{
-	assert(m_remoteControl != nullptr);
+void CDMRGateway::remoteControl(const std::string &commandStr) {
+	if (m_remoteControl == nullptr)
+		return;
 
 	REMOTE_COMMAND command = m_remoteControl->processCommand(commandStr);
 	switch (command) {
